@@ -52,6 +52,16 @@
     when navigating through pages scroll to top
     ```
 
+### Automate virsioning
+
+  - tags: [Landing]
+  - priority: low
+  - workload: Hard
+  - defaultExpanded: false
+    ```md
+    Display current version in footer description text. the version should come from build number and starts with 2.0..1 as well as the date 25.12.14 for examble
+    ```
+
 ## Done
 
 ### Project Initialization

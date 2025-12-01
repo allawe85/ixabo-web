@@ -1,9 +1,9 @@
 import React from 'react';
 import { cn } from "@/lib/utils";
 
-const iXaboInput = React.forwardRef(({ label, type = "text", error, className = "", containerClassName = "", ...props }, ref) => {
+const IxaboInput = React.forwardRef(({ label, type = "text", error, className = "", containerClassName = "", ...props }, ref) => {
   return (
-    <div className={cn("w-full space-y-2", containerClassName)}>
+    <div className={cn("w-full space-y-2 relative z-10", containerClassName)}>
       {label && (
         <label className="block text-sm font-medium text-ui-dark">
           {label}
@@ -13,7 +13,8 @@ const iXaboInput = React.forwardRef(({ label, type = "text", error, className = 
         ref={ref}
         type={type}
         className={cn(
-          "w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-ui-dark",
+          // FIX: Added 'border-gray-300', 'bg-white', and 'z-20' to ensure visibility and clickability
+          "w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-ui-dark relative z-20",
           "focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary",
           "transition-all duration-200 placeholder:text-gray-400",
           error ? "border-red-500 focus:ring-red-200" : "",
@@ -26,6 +27,6 @@ const iXaboInput = React.forwardRef(({ label, type = "text", error, className = 
   );
 });
 
-iXaboInput.displayName = "iXaboInput";
+IxaboInput.displayName = "IxaboInput";
 
-export default iXaboInput;
+export default IxaboInput;

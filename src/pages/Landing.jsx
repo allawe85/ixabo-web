@@ -3,8 +3,6 @@ import Hero from "../components/home/Hero";
 import PartnerSlider from "../components/home/PartnerSlider";
 import CategoryGrid from "../components/home/CategoryGrid";
 import OfferTicker from "../components/home/OfferTicker";
-import iXaboButton from "@/components/ui/iXaboButton";
-
 
 const Landing = () => {
   return (
@@ -14,7 +12,6 @@ const Landing = () => {
       <PartnerSlider />
       <CategoryGrid />
       <OfferTicker />
-      <iXaboButton>Click me</iXaboButton>
     </div>
   );
 };

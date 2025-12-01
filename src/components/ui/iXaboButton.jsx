@@ -1,9 +1,9 @@
 import React from 'react';
-import { cn } from "@/lib/utils"; // Uses shadcn's utility for class merging
+import { cn } from "@/lib/utils";
 
-const iXaboButton = React.forwardRef(({ children, variant = 'primary', className = '', ...props }, ref) => {
+const IxaboButton = React.forwardRef(({ children, variant = 'primary', type = 'button', className = '', ...props }, ref) => {
   
-  const baseStyles = "inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform active:scale-95 cursor-pointer disabled:opacity-50 disabled:pointer-events-none";
+  const baseStyles = "inline-flex items-center justify-center px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform active:scale-95 cursor-pointer disabled:opacity-50 disabled:pointer-events-none relative z-20";
   
   const variants = {
     primary: "bg-brand-primary text-white shadow-lg shadow-brand-primary/30 hover:shadow-brand-primary/50 hover:-translate-y-0.5",
@@ -15,6 +15,7 @@ const iXaboButton = React.forwardRef(({ children, variant = 'primary', className
   return (
     <button 
       ref={ref}
+      type={type} 
       className={cn(baseStyles, variants[variant], className)}
       {...props}
     >
@@ -23,6 +24,6 @@ const iXaboButton = React.forwardRef(({ children, variant = 'primary', className
   );
 });
 
-iXaboButton.displayName = "iXaboButton";
+IxaboButton.displayName = "IxaboButton";
 
-export default iXaboButton;
+export default IxaboButton;

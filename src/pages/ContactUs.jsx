@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useTranslation } from "react-i18next";
-import iXaboButton from "@/components/ui/iXaboButton";
-import iXaboInput from "@/components/ui/iXaboInput";
+import IxaboButton from "@/components/ui/IxaboButton";
+import IxaboInput from "@/components/ui/IxaboInput";
 
 import {
   LuMail,
@@ -48,13 +48,12 @@ const ContactUs = () => {
     }
   };
 
-  // MOVED INSIDE: So we can use t() dynamically
   const contactInfo = [
     {
       icon: LuPhone,
       text: t("general.phone"),
       label: t("contact.label_phone_tag"),
-      isDirLtr: true, // Helper flag for numbers
+      isDirLtr: true,
     },
     {
       icon: LuMail,
@@ -64,7 +63,7 @@ const ContactUs = () => {
     },
     {
       icon: LuMapPin,
-      text: t("contact.location_value"), // "As'Salt, Jordan" or "السلط، الأردن"
+      text: t("contact.location_value"),
       label: t("contact.label_location_tag"),
       isDirLtr: false,
     },
@@ -72,7 +71,7 @@ const ContactUs = () => {
 
   return (
     <div className="min-h-screen bg-ui-bg pt-36 pb-12 px-4">
-      {/* Header Section */}
+      {/* 1. RESTORED HEADER */}
       <div className="max-w-3xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-ui-dark mb-4">
           {t("contact.title")}
@@ -81,7 +80,7 @@ const ContactUs = () => {
       </div>
 
       <div className="max-w-5xl mx-auto">
-        {/* Contact Info Cards */}
+        {/* 2. RESTORED INFO CARDS */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {contactInfo.map((info, idx) => (
             <div
@@ -91,7 +90,6 @@ const ContactUs = () => {
               <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center text-brand-primary mb-4">
                 <info.icon size={24} />
               </div>
-              {/* Force LTR for phone/email so they don't look weird in Arabic */}
               <h3
                 className="font-semibold text-ui-dark"
                 dir={info.isDirLtr ? "ltr" : "auto"}
@@ -103,18 +101,17 @@ const ContactUs = () => {
           ))}
         </div>
 
-        {/* The Form Card */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        {/* 3. MAIN FORM CARD */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative z-0">
           <div className="grid md:grid-cols-5 h-full">
-            {/* Decorative Side Panel */}
-            <div className="hidden md:block col-span-2 bg-brand-primary relative p-8 text-white overflow-hidden">
+            {/* Side Panel */}
+            <div className="hidden md:block col-span-2 bg-brand-primary relative p-8 text-white overflow-hidden z-0">
               <div className="relative z-10 h-full flex flex-col justify-between">
                 <div>
                   <h3 className="text-2xl font-bold mb-4">
                     {t("contact.info_title")}
                   </h3>
                   <p className="opacity-90 leading-relaxed">
-                    {/* FIXED: Now using translation */}
                     {t("contact.panel_desc")}
                   </p>
                 </div>
@@ -126,7 +123,7 @@ const ContactUs = () => {
             </div>
 
             {/* Form Section */}
-            <div className="col-span-3 p-8 md:p-12">
+            <div className="col-span-3 p-8 md:p-12 relative z-10 bg-white">
               {success ? (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]">
                   <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
@@ -136,22 +133,24 @@ const ContactUs = () => {
                     {t("contact.success_title")}
                   </h3>
                   <p className="text-ui-gray">{t("contact.success_desc")}</p>
-                  <iXaboButton variant="secondary" onClick={() => setSuccess(false)}>
-                    {t("contact.btn_submit")}{" "}
-                    {/* Should probably be "Send Another" */}
-                  </iXaboButton>
+                  <IxaboButton
+                    variant="secondary"
+                    onClick={() => setSuccess(false)}
+                  >
+                    Send Another
+                  </IxaboButton>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
-                    <iXaboInput
+                    <IxaboInput
                       name="name"
                       label={t("contact.label_name")}
                       value={formData.name}
                       onChange={handleChange}
                       required
                     />
-                    <iXaboInput
+                    <IxaboInput
                       name="email"
                       type="email"
                       label={t("contact.label_email")}
@@ -161,7 +160,7 @@ const ContactUs = () => {
                     />
                   </div>
 
-                  <iXaboInput
+                  <IxaboInput
                     name="subject"
                     label={t("contact.label_subject")}
                     value={formData.subject}
@@ -169,7 +168,7 @@ const ContactUs = () => {
                     required
                   />
 
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative z-20">
                     <label className="block text-sm font-medium text-ui-dark">
                       {t("contact.label_message")}
                     </label>
@@ -177,15 +176,19 @@ const ContactUs = () => {
                       name="message"
                       rows="4"
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all resize-none"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white text-ui-dark focus:outline-none focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary transition-all resize-none relative z-20"
                       value={formData.message}
                       onChange={handleChange}
                     />
                   </div>
 
-                  <iXaboButton type="submit" className="w-full" disabled={loading}>
+                  <IxaboButton
+                    type="submit"
+                    className="w-full"
+                    disabled={loading}
+                  >
                     {loading ? "..." : t("contact.btn_submit")}
-                  </iXaboButton>
+                  </IxaboButton>
                 </form>
               )}
             </div>

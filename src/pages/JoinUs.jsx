@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useTranslation } from "react-i18next";
-import iXaboButton from "@/components/ui/iXaboButton";
-import iXaboInput from "@/components/ui/iXaboInput";
+import IxaboButton from "@/components/ui/IxaboButton";
+import IxaboInput from "@/components/ui/IxaboInput";
 
 import { LuCircleCheck, LuSend, LuUsers, LuTrendingUp } from "react-icons/lu";
 
@@ -54,7 +54,7 @@ const JoinUs = () => {
 
   return (
     <div className="min-h-screen bg-ui-bg pt-36 pb-12 px-4">
-      {/* Page Header */}
+      {/* RESTORED Header */}
       <div className="max-w-3xl mx-auto text-center mb-12">
         <h1 className="text-4xl font-bold text-ui-dark mb-4">
           {t("join.title")}
@@ -63,18 +63,17 @@ const JoinUs = () => {
       </div>
 
       <div className="max-w-5xl mx-auto">
-        {/* The Card Container */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        {/* Main Card */}
+        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden relative z-0">
           <div className="grid md:grid-cols-5 h-full">
-            {/* Colored Side Panel (Benefits) */}
-            <div className="hidden md:block col-span-2 bg-brand-primary relative p-8 text-white overflow-hidden">
+            {/* Left Panel (Pink) */}
+            <div className="hidden md:block col-span-2 bg-brand-primary relative p-8 text-white overflow-hidden z-0">
               <div className="relative z-10 h-full flex flex-col justify-between">
                 <div>
                   <h3 className="text-2xl font-bold mb-6">
                     {t("join.form_title")}
                   </h3>
 
-                  {/* Mini Stats/Benefits in Sidebar */}
                   <div className="space-y-6">
                     <div className="flex gap-3 items-start">
                       <div className="bg-white/20 p-2 rounded-lg">
@@ -114,8 +113,8 @@ const JoinUs = () => {
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             </div>
 
-            {/* Form Section */}
-            <div className="col-span-3 p-8 md:p-12">
+            {/* Right Panel (Form) */}
+            <div className="col-span-3 p-8 md:p-12 relative z-10 bg-white">
               {success ? (
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-4 min-h-[400px]">
                   <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
@@ -125,7 +124,10 @@ const JoinUs = () => {
                     {t("join.success_title")}
                   </h3>
                   <p className="text-ui-gray">{t("join.success_desc")}</p>
-                  <iXaboButton variant="secondary" onClick={() => setSuccess(false)}>
+                  <iXaboButton
+                    variant="secondary"
+                    onClick={() => setSuccess(false)}
+                  >
                     {t("join.btn_another")}
                   </iXaboButton>
                 </div>
@@ -137,7 +139,7 @@ const JoinUs = () => {
                     </h3>
                   </div>
 
-                  <iXaboInput
+                  <IxaboInput
                     name="business_name"
                     value={formData.business_name}
                     label={t("join.label_business")}
@@ -146,7 +148,7 @@ const JoinUs = () => {
                     onChange={handleChange}
                   />
 
-                  <iXaboInput
+                  <IxaboInput
                     name="contact_person"
                     value={formData.contact_person}
                     label={t("join.label_contact")}
@@ -156,7 +158,7 @@ const JoinUs = () => {
                   />
 
                   <div className="grid grid-cols-2 gap-4">
-                    <iXaboInput
+                    <IxaboInput
                       name="phone_number"
                       value={formData.phone_number}
                       label={t("join.label_phone")}
@@ -164,7 +166,7 @@ const JoinUs = () => {
                       required
                       onChange={handleChange}
                     />
-                    <iXaboInput
+                    <IxaboInput
                       name="category_interest"
                       value={formData.category_interest}
                       label={t("join.label_category")}
@@ -173,14 +175,14 @@ const JoinUs = () => {
                     />
                   </div>
 
-                  <iXaboButton
+                  <IxaboButton
                     type="submit"
                     variant="primary"
                     className="w-full h-12 text-lg mt-4"
                     disabled={loading}
                   >
                     {loading ? t("join.btn_sending") : t("join.btn_submit")}
-                  </iXaboButton>
+                  </IxaboButton>
                 </form>
               )}
             </div>

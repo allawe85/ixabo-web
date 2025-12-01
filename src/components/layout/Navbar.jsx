@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { LuMenu, LuX, LuGlobe } from "react-icons/lu";
-import iXaboButton from "@/components/ui/iXaboButton";
+import IxaboButton from "@/components/ui/IxaboButton";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { IMAGES } from "../../constants";
@@ -60,12 +60,12 @@ const Navbar = () => {
                 <span>{i18n.language === "en" ? "AR" : "EN"}</span>
               </button>
 
-              <iXaboButton
+              <IxaboButton
                 variant="primary"
                 className="px-5 py-2 rounded-lg text-sm"
               >
                 {t("nav.download")}
-              </iXaboButton>
+              </IxaboButton>
             </div>
           </div>
 
@@ -102,9 +102,9 @@ const Navbar = () => {
               </Link>
             ))}
             <div className="pt-4">
-              <iXaboButton variant="primary" className="w-full">
+              <IxaboButton variant="primary" className="w-full">
                 {t("nav.download")}
-              </iXaboButton>
+              </IxaboButton>
             </div>
           </div>
         </div>
