@@ -62,6 +62,16 @@
     Display current version in footer description text. the version should come from build number and starts with 2.0..1 as well as the date 25.12.14 for examble
     ```
 
+### Dark Theme
+
+  - tags: [Landing, Admin]
+  - priority: high
+  - workload: Easy
+  - defaultExpanded: false
+    ```md
+    Implement dark theme
+    ```
+
 ## Done
 
 ### Project Initialization

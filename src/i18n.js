@@ -111,6 +111,171 @@ const resources = {
         filter_category: "Category",
         filter_gov: "Governorate",
         no_results: "No providers found matching your criteria."
+      },
+      admin: {
+        dashboard: "Dashboard",
+        providers: "Providers",
+        system_params: "System Parameters",
+        management: "Management",
+        users: "Users",
+        subscriptions: "Subscriptions",
+        scans: "Scans",
+        notifications: "Notifications",
+        logout: "Logout",
+        welcome: "Welcome back",
+        role: {
+          admin: "Administrator",
+          provider: "Provider",
+          subprovider: "Sub-provider"
+        },
+        providers_title: "Providers", // or "الشركاء"
+        providers_subtitle: "Manage your partners and their status.",
+        add_provider: "Add Provider",
+        search_placeholder: "Search by name...",
+
+        // Table Headers
+        logo: "Logo",
+        name_en: "Name (En)",
+        name_ar: "Name (Ar)",
+        group: "Group",
+        status: "Status",
+        offers: "Offers",
+        actions: "Actions",
+
+        // Status Labels
+        active: "Active",
+        inactive: "Inactive",
+
+        // Actions
+        view: "View Details",
+        edit: "Edit Info",
+        delete: "Delete",
+        delete_confirm: "Are you sure?",
+        no_results: "No results found.",
+
+        // categories
+        categories_title: "Categories",
+        categories_subtitle: "Manage business categories and their order.",
+        add_category: "Add Category",
+        icon: "Icon",
+        order: "Order",
+        provider_count: "Providers",
+
+        governorates_title: "Governorates",
+        governorates_subtitle: "Manage regions and locations.",
+        add_governorate: "Add Governorate",
+
+        sales_points_title: "Sales Points",
+        sales_points_subtitle: "Manage authorized sales locations.",
+        add_sales_point: "Add Sales Point",
+        phone: "Phone Number",
+        edit_sales_point: "Edit Sales Point",
+        fill_required_fields: "Please fill in all required fields.",
+        address_en: "Address (En)",
+        address_ar: "Address (Ar)",
+        cancel: "Cancel",
+        save: "Save",
+        saving: "Saving...",
+
+        users_title: "Users",
+        users_subtitle: "Manage platform users and their roles.",
+        name: "Name",
+        email: "Email",
+        role_label: "Role",
+
+        packages_title: "Packages",
+        packages_subtitle: "Manage subscription packages and pricing.",
+        add_package: "Add Package",
+        title_en: "Title (En)",
+        title_ar: "Title (Ar)",
+        price: "Price",
+        color: "Color",
+        validity: "Validity",
+        days: "Days",
+        edit_package: "Edit Package",
+        desc_en: "Description (En)",
+        desc_ar: "Description (Ar)",
+        is_main: "Main Package?",
+
+        subscriptions_title: "Subscriptions", // "الاشتراكات"
+        subscriptions_subtitle: "View user subscription history.", // "عرض سجل اشتراكات المستخدمين"
+        user: "User", // "المستخدم"
+        package: "Package", // "الباقة"
+        amount: "Amount", // "القيمة"
+        purchase_date: "Purchase Date", // "تاريخ الشراء"
+        expiry_date: "Expiry Date", // "تاريخ الانتهاء"
+        paid: "Paid", // "مدفوع"
+        pending: "Pending", // "معلق"
+        purchased: "Purchased", // "تم الشراء"
+        expires: "Expires", // "ينتهي"
+
+        codes_title: "Codes Management",
+        codes_subtitle: "Manage subscription groups and discount codes.",
+        tab_groups: "Subscription Groups",
+        tab_discounts: "Discount Codes",
+        add_group: "New Group",
+        add_discount: "New Discount Code",
+        group_name: "Group Name",
+        net_price: "Net Price",
+        usage: "Usage",
+        code: "Code",
+        expiry: "Expiry Date",
+        gold_price: "Gold Price",
+        silver_price: "Silver Price",
+        usage_count: "Times Used",
+
+        memes_title: "Intro Memes",
+        memes_subtitle: "Manage splash screen marketing images.",
+        add_meme: "Add Meme",
+        image: "Image",
+        message_en: "Message (En)",
+        message_ar: "Message (Ar)",
+        valid_from: "Valid From",
+        valid_to: "Valid To",
+
+        suggestions_title: "Suggestions",
+        suggestions_subtitle: "Feedback and inquiries from users.",
+        type: "Type",
+        message: "Message",
+        contact_info: "Contact Info",
+
+        approvals_title: "Approvals",
+        approvals_subtitle: "New merchant requests.",
+        business_name: "Business Name",
+        contact_person: "Contact Person",
+
+        notifications_title: "Notification Campaigns",
+        notifications_subtitle: "Create and manage push notification campaigns.",
+        create_campaign: "New Campaign",
+        campaign_name: "Campaign Name",
+        send_campaign: "Send Campaign",
+        message_en: "Message (En)",
+        message_ar: "Message (Ar)",
+
+        scans_title: "Offer Scans",
+        scans_subtitle: "Monitor real-time offer redemptions.",
+        provider: "Provider",
+        offer: "Offer",
+        date: "Date",
+
+        menu: {
+          dashboard: "Dashboard",
+          providers: "Providers",
+          system_params: "System Parameters",
+          categories: "Categories",
+          governorates: "Governorates",
+          packages: "Packages",
+          sales_points: "Sales Points",
+          management: "Management",
+          users: "Users",
+          subscriptions: "Subscriptions",
+          codes: "Codes",
+          scans: "Scans",
+          notifications: "Notifications",
+          intro_memes: "Intro Memes",
+          approvals: "Approvals",
+          suggestions: "Suggestions & Complaints",
+        }
       }
     }
   },
@@ -121,7 +286,7 @@ const resources = {
         pricing: "الأسعار",
         join: "انضم إلينا",
         contact: "تواصل معنا",
-        dictionary: "الدليل", 
+        dictionary: "الدليل",
         download: "حمل التطبيق"
       },
       hero: {
@@ -218,6 +383,171 @@ const resources = {
         filter_category: "التصنيف",
         filter_gov: "المحافظة",
         no_results: "لم يتم العثور على نتائج تطابق بحثك."
+      },
+      admin: {
+        dashboard: "لوحة التحكم",
+        providers: "الشركاء",
+        system_params: "إعدادات النظام",
+        management: "الإدارة",
+        users: "المستخدمين",
+        subscriptions: "الاشتراكات",
+        scans: "حركات المسح",
+        notifications: "الإشعارات",
+        logout: "تسجيل الخروج",
+        welcome: "مرحباً بك",
+        role: {
+          admin: "مدير النظام",
+          provider: "شريك",
+          subprovider: "فرع / موظف"
+        },
+        providers_title: "الشركاء",
+        providers_subtitle: "إدارة الشركاء وحالتهم في النظام.",
+        add_provider: "إضافة شريك",
+        search_placeholder: "ابحث بالاسم...",
+
+        // Table Headers
+        logo: "الشعار",
+        name_en: "الاسم (EN)",
+        name_ar: "الاسم (AR)",
+        group: "المجموعة",
+        status: "الحالة",
+        offers: "العروض",
+        actions: "الإجراءات",
+
+        // Status Labels
+        active: "نشط",
+        inactive: "غير نشط",
+
+        // Actions
+        view: "عرض التفاصيل",
+        edit: "تعديل المعلومات",
+        delete: "حذف",
+        delete_confirm: "هل أنت متأكد أنك تريد حذف هذا الشريك؟",
+        no_results: "لا توجد نتائج.",
+
+        // categories
+        categories_title: "التصنيفات",
+        categories_subtitle: "إدارة تصنيفات الأعمال وترتيبها.",
+        add_category: "إضافة تصنيف",
+        icon: "الأيقونة",
+        order: "الترتيب",
+        provider_count: "عدد الشركاء",
+
+        governorates_title: "المحافظات",
+        governorates_subtitle: "إدارة المناطق والمواقع الجغرافية.",
+        add_governorate: "إضافة محافظة",
+
+        sales_points_title: "نقاط البيع",
+        sales_points_subtitle: "إدارة نقاط البيع المعتمدة.",
+        add_sales_point: "إضافة نقطة بيع",
+        phone: "رقم الهاتف",
+        edit_sales_point: "تعديل نقطة البيع",
+        fill_required_fields: "يرجى تعبئة الحقول المطلوبة",
+        address_en: "العنوان (En)",
+        address_ar: "العنوان (Ar)",
+        cancel: "إلغاء",
+        save: "حفظ",
+        saving: "جاري الحفظ...",
+
+        users_title: "المستخدمين",
+        users_subtitle: "إدارة مستخدمي المنصة وصلاحياتهم.",
+        name: "الاسم",
+        email: "البريد الإلكتروني",
+        role_label: "الصلاحية",
+
+        packages_title: "الباقات",
+        packages_subtitle: "إدارة باقات الاشتراك والأسعار.",
+        add_package: "إضافة باقة",
+        title_en: "العنوان (EN)",
+        title_ar: "العنوان (AR)",
+        price: "السعر",
+        color: "اللون",
+        validity: "المدة",
+        days: "أيام",
+        edit_package: "تعديل الباقة",
+        desc_en: "الوصف (En)",
+        desc_ar: "الوصف (Ar)",
+        is_main: "باقة رئيسية؟",
+
+        subscriptions_title: "الاشتراكات",
+        subscriptions_subtitle: "عرض سجل اشتراكات المستخدمين", // 
+        user: "المستخدم",
+        package: "الباقة",
+        amount: "القيمة",
+        purchase_date: "تاريخ الشراء",
+        expiry_date: "تاريخ الانتهاء",
+        paid: "مدفوع",
+        pending: "معلق",
+        purchased: "تم الشراء",
+        expires: "ينتهي",
+
+        codes_title: "إدارة الأكواد",
+        codes_subtitle: "إدارة مجموعات الاشتراكات وأكواد الخصم.",
+        tab_groups: "مجموعات الاشتراكات",
+        tab_discounts: "أكواد الخصم",
+        add_group: "مجموعة جديدة",
+        add_discount: "كود خصم جديد",
+        group_name: "اسم المجموعة",
+        net_price: "السعر الصافي",
+        usage: "الاستخدام",
+        code: "الكود",
+        expiry: "تاريخ الانتهاء",
+        gold_price: "سعر الذهبي",
+        silver_price: "سعر الفضي",
+        usage_count: "عدد الاستخدام",
+
+        memes_title: "شاشات الترحيب",
+        memes_subtitle: "إدارة صور الإعلانات في بداية التطبيق.",
+        add_meme: "إضافة شاشة",
+        image: "الصورة",
+        message_en: "الرسالة (En)",
+        message_ar: "الرسالة (Ar)",
+        valid_from: "من تاريخ",
+        valid_to: "إلى تاريخ",
+
+        suggestions_title: "الاقتراحات",
+        suggestions_subtitle: "رسائل وملاحظات المستخدمين.",
+        type: "النوع",
+        message: "الرسالة",
+        contact_info: "معلومات الاتصال",
+
+        approvals_title: "الموافقات",
+        approvals_subtitle: "طلبات انضمام الشركاء الجدد.",
+        business_name: "اسم العمل",
+        contact_person: "الشخص المسؤول",
+
+        notifications_title: "حملات الإشعارات",
+        notifications_subtitle: "إنشاء وإدارة حملات الإشعارات.",
+        create_campaign: "حملة جديدة",
+        campaign_name: "اسم الحملة",
+        send_campaign: "إرسال الحملة",
+        message_en: "الرسالة (EN)",
+        message_ar: "الرسالة (AR)",
+
+        scans_title: "حركات المسح",
+        scans_subtitle: "متابعة عمليات استبدال العروض.",
+        provider: "المزود",
+        offer: "العرض",
+        date: "التاريخ",
+
+        menu: {
+          dashboard: "لوحة التحكم",
+          providers: "الشركاء",
+          system_params: "إعدادات النظام",
+          categories: "التصنيفات",
+          governorates: "المحافظة",
+          packages: "الباقات",
+          sales_points: "نقاط البيع",
+          management: "الإدارة",
+          users: "المستخدمين",
+          subscriptions: "الاشتراكات",
+          codes: "الأكواد",
+          scans: "حركات المسح",
+          notifications: "الإشعارات",
+          intro_memes: "شاشات الترحيب",
+          approvals: "الموافقات",
+          suggestions: "الاقتراحات والشكاوى",
+        }
       }
     }
   }
