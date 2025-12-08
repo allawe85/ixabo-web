@@ -5,7 +5,7 @@ export async function getProviderNumbers(providerId) {
   const { data, error } = await supabase
     .from("provider_number")
     .select("*")
-    .eq("ProviderID", providerId);
+    .eq("ProviderID", providerId); // Correct: ProviderID
   if (error) throw new Error(error.message);
   return data;
 }
@@ -17,6 +17,7 @@ export async function createProviderNumber(item) {
 }
 
 export async function updateProviderNumber({ id, ...updates }) {
+  // Correct: 'id' is lowercase in your Dart file: set id(int value) => setField<int>('id', value);
   const { data, error } = await supabase.from("provider_number").update(updates).eq("id", id).select();
   if (error) throw new Error(error.message);
   return data;
@@ -32,7 +33,7 @@ export async function getProviderLocations(providerId) {
   const { data, error } = await supabase
     .from("provider_location")
     .select("*")
-    .eq("ProvideID", providerId); // Note: Column is ProvideID in schema
+    .eq("ProvideID", providerId); // Correct: ProvideID (from your uploaded file)
   if (error) throw new Error(error.message);
   return data;
 }
@@ -44,6 +45,7 @@ export async function createProviderLocation(item) {
 }
 
 export async function updateProviderLocation({ id, ...updates }) {
+  // Correct: 'id' is lowercase in provider_location.dart
   const { data, error } = await supabase.from("provider_location").update(updates).eq("id", id).select();
   if (error) throw new Error(error.message);
   return data;
@@ -57,7 +59,7 @@ export async function deleteProviderLocation(id) {
 // --- LINKS (CONTACTS) ---
 export async function getProviderContacts(providerId) {
   const { data, error } = await supabase
-    .from("view_provider_contact") // Use view to get Type Name/Icon
+    .from("view_provider_contact") 
     .select("*")
     .eq("ProviderID", providerId);
   if (error) throw new Error(error.message);
@@ -65,7 +67,10 @@ export async function getProviderContacts(providerId) {
 }
 
 export async function getContactTypes() {
-  const { data, error } = await supabase.from("contact_type").select("*");
+  const { data, error } = await supabase
+    .from("contact_type")
+    .select("*"); 
+    // Dart says: get id => getField<int>('ID')!; -> So columns are likely ID, Name
   if (error) throw new Error(error.message);
   return data;
 }

@@ -113,6 +113,8 @@ const resources = {
         no_results: "No providers found matching your criteria."
       },
       admin: {
+        add: "Add",
+        close: "Close",
         dashboard: "Dashboard",
         providers: "Providers",
         system_params: "System Parameters",
@@ -154,6 +156,17 @@ const resources = {
         manage_locations: "Manage Locations",
         manage_links: "Manage Social Links",
         view_scans: "View Scans",
+        scans_for: "Scans for",
+        manage_offers: "Manage Offers",
+        standard_offers: "Standard Offers",
+        limited_offers: "Limited Offers",
+        upload_image: "Upload Image",
+        manage_users: "Manage Users",
+        add_sub_provider: "Add Sub-Provider",
+        search_user_placeholder: "Search by Name, Email, Phone...",
+        confirm_add_subprovider: "Convert this user to Sub-Provider?",
+        confirm_remove_subprovider: "Remove privileges from this user?",
+        back: "Back",
 
         dashboard_title: "Dashboard",
         dashboard_welcome: "Welcome to your admin overview.",
@@ -430,6 +443,8 @@ const resources = {
         no_results: "لم يتم العثور على نتائج تطابق بحثك."
       },
       admin: {
+        add: "إضافة",
+        close: "إغلاق",
         dashboard: "لوحة التحكم",
         providers: "الشركاء",
         system_params: "إعدادات النظام",
@@ -471,6 +486,17 @@ const resources = {
         manage_locations: "إدارة المواقع",
         manage_links: "إدارة الروابط",
         view_scans: "عرض المسحات",
+        scans_for: "مسحات",
+        manage_offers: "إدارة العروض",
+        standard_offers: "عروض عادية",
+        limited_offers: "عروض محدودة",
+        upload_image: "رفع صورة",
+        manage_users: "إدارة المستخدمين",
+        add_sub_provider: "إضافة حساب فرعي",
+        search_user_placeholder: "ابحث بالاسم، البريد، أو الهاتف...",
+        confirm_add_subprovider: "تحويل هذا المستخدم إلى حساب فرعي؟",
+        confirm_remove_subprovider: "إزالة الصلاحيات من هذا المستخدم؟",
+        back: "رجوع",
 
         dashboard_title: "لوحة التحكم",
         dashboard_welcome: "مرحباً بك في لوحة الإدارة.",

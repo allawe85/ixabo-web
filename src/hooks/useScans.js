@@ -1,5 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getScans, updateScanStatus } from "../services/apiScans";
+import { 
+  getScans, 
+  getScansByProvider, 
+  updateScanStatus 
+} from "../services/apiScans";
 import { toast } from "sonner";
 
 export function useScans() {
@@ -24,4 +28,15 @@ export function useUpdateScan() {
     },
     onError: (err) => toast.error(err.message),
   });
+}
+
+export function useProviderScans(providerId) {
+  const { data: scans, isLoading, error } = useQuery({
+    queryKey: ["providerScans", providerId],
+    queryFn: () => getScansByProvider(providerId),
+    enabled: !!providerId, // Only run if ID is present
+    staleTime: 30 * 1000,
+  });
+
+  return { scans, isLoading, error };
 }

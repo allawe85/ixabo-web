@@ -32,3 +32,14 @@ export async function updateScanStatus({ id, status, userId }) {
 
   if (error) throw new Error(error.message);
 }
+
+export async function getScansByProvider(providerId) {
+  const { data, error } = await supabase
+    .from("ViewScans")
+    .select("*")
+    .eq("ProviderID", providerId)
+    .order("id", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data;
+}

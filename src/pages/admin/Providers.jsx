@@ -42,8 +42,6 @@ import {
   Loader,
   Trash2,
   Pencil,
-  Eye,
-  Store,
   Image as ImageIcon,
   Clock,
   Grid,
@@ -52,11 +50,13 @@ import {
   Phone,
   Link as LinkIcon,
   QrCode,
+  Tag,
+  Users,
 } from "lucide-react";
 import AssignModal from "../../components/admin/providers/AssignModal";
 import { toast } from "sonner";
-import { useCategories } from "../../hooks/useCategories"; // To get list of all cats
-import { useGovernorates } from "../../hooks/useGovernorates"; // To get list of all govs
+import { useCategories } from "../../hooks/useCategories"; 
+import { useGovernorates } from "../../hooks/useGovernorates"; 
 import {
   useProviderCategories,
   useUpdateProviderCategories,
@@ -70,7 +70,10 @@ import {
   useGalleryMutations,
 } from "../../hooks/useProviderContent";
 import MediaManager from "../../components/admin/providers/MediaManager";
-import DetailManager from "../../components/admin/providers/DetailManager"; // Import
+import DetailManager from "../../components/admin/providers/DetailManager";
+import ProviderScans from "../../components/admin/providers/ProviderScans";
+import OffersManager from "../../components/admin/providers/OffersManager";
+import SubProviderManager from "../../components/admin/providers/SubProviderManager"; 
 
 const Providers = () => {
   const { t, i18n } = useTranslation();
@@ -89,6 +92,13 @@ const Providers = () => {
   const { governorates } = useGovernorates();
 
   const [detailType, setDetailType] = useState(null); // 'NUMBER', 'LOCATION', 'LINK'
+
+  const [showOffers, setShowOffers] = useState(null); // Holds provider ID
+
+  const [usersProvider, setUsersProvider] = useState(null); // Holds provider obj
+
+  // -- View Scans Logic --
+  const [scansProvider, setScansProvider] = useState(null); // Holds the provider object if modal is open
 
   // -- Assign Logic --
   const [assignType, setAssignType] = useState(null); // 'CATEGORY' or 'GOV' or null
@@ -311,6 +321,9 @@ const Providers = () => {
         <DropdownMenuItem onClick={() => handleOpenAssign(provider, "GOV")}>
           <MapPin className="mr-2 h-4 w-4" /> {t("admin.assign_governorates")}
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setShowOffers(provider.ID)}>
+          <Tag className="mr-2 h-4 w-4" /> {t("admin.manage_offers")}
+        </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleOpenMedia(provider, "MENU")}>
           <MenuIcon className="mr-2 h-4 w-4" /> {t("admin.manage_menu")}
         </DropdownMenuItem>
@@ -328,9 +341,13 @@ const Providers = () => {
         <DropdownMenuItem onClick={() => handleOpenDetails(provider, "LINK")}>
           <LinkIcon className="mr-2 h-4 w-4" /> {t("admin.manage_links")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => console.log("Show Scans")}>
+        <DropdownMenuItem onClick={() => setScansProvider(provider)}>
           <QrCode className="mr-2 h-4 w-4" /> {t("admin.view_scans")}
         </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setUsersProvider(provider)}>
+      <Users className="mr-2 h-4 w-4" /> {t('admin.manage_users')}
+    </DropdownMenuItem>
+
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
           onClick={() => {
@@ -787,6 +804,36 @@ const Providers = () => {
         type={detailType}
         providerId={targetProviderId}
       />
+
+      {/* --- PROVIDER SCANS MODAL --- */}
+      {scansProvider && (
+        <ProviderScans
+          isOpen={!!scansProvider}
+          onClose={() => setScansProvider(null)}
+          providerId={scansProvider.ID}
+          providerName={isRTL ? scansProvider.NameAr : scansProvider.Name}
+        />
+      )}
+
+      {/* --- OFFERS MANAGER --- */}
+      {showOffers && (
+        <OffersManager
+          isOpen={!!showOffers}
+          onClose={() => setShowOffers(null)}
+          providerId={showOffers}
+        />
+      )}
+
+      {/* --- SUB PROVIDER MANAGER --- */}
+       {usersProvider && (
+         <SubProviderManager 
+           isOpen={!!usersProvider}
+           onClose={() => setUsersProvider(null)}
+           providerId={usersProvider.ID}
+           providerName={isRTL ? usersProvider.NameAr : usersProvider.Name}
+         />
+       )}
+       
     </div>
   );
 };
