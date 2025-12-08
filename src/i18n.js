@@ -132,6 +132,37 @@ const resources = {
         providers_subtitle: "Manage your partners and their status.",
         add_provider: "Add Provider",
         search_placeholder: "Search by name...",
+        edit_provider: "Edit Provider",
+        settings: "Settings",
+        active_status: "Active Status",
+        show_menu: "Show Menu Button",
+        coming_soon: "Coming Soon Mode",
+        max_offers: "Max Offers",
+        max_limited: "Max Limited Offers",
+        offer_type: "Customized Offer Type",
+        working_hours: "Working Hours",
+        from: "From",
+        to: "To",
+
+        dashboard_title: "Dashboard",
+        dashboard_welcome: "Welcome to your admin overview.",
+        total_income: "Total Income",
+        this_month: "This Month",
+        active_subscribers: "Active Subscribers",
+        total_users: "Total Users",
+        active_providers: "Active Providers",
+        total_providers: "Total Providers",
+        active_offers: "Active Offers",
+        top_category: "Top Category",
+        providers_by_gov: "Providers by Governorate",
+        top_providers: "Top Providers",
+        by_scans: "Ranked by total offer scans",
+        scans: "Scans",
+        revenue_trend: "Revenue Trend",
+        last_12_months: "Last 12 Months Performance",
+        income: "Income",
+        daily_scans: "Daily Activity",
+        last_30_days: "Offer redemptions over the last 30 days",
 
         // Table Headers
         logo: "Logo",
@@ -160,10 +191,12 @@ const resources = {
         icon: "Icon",
         order: "Order",
         provider_count: "Providers",
+        edit_category: "Edit Category",
 
         governorates_title: "Governorates",
         governorates_subtitle: "Manage regions and locations.",
         add_governorate: "Add Governorate",
+        edit_governorate: "Edit Governorate",
 
         sales_points_title: "Sales Points",
         sales_points_subtitle: "Manage authorized sales locations.",
@@ -197,17 +230,17 @@ const resources = {
         desc_ar: "Description (Ar)",
         is_main: "Main Package?",
 
-        subscriptions_title: "Subscriptions", // "الاشتراكات"
-        subscriptions_subtitle: "View user subscription history.", // "عرض سجل اشتراكات المستخدمين"
-        user: "User", // "المستخدم"
-        package: "Package", // "الباقة"
-        amount: "Amount", // "القيمة"
-        purchase_date: "Purchase Date", // "تاريخ الشراء"
-        expiry_date: "Expiry Date", // "تاريخ الانتهاء"
-        paid: "Paid", // "مدفوع"
-        pending: "Pending", // "معلق"
-        purchased: "Purchased", // "تم الشراء"
-        expires: "Expires", // "ينتهي"
+        subscriptions_title: "Subscriptions",
+        subscriptions_subtitle: "View user subscription history.",
+        user: "User",
+        package: "Package",
+        amount: "Amount",
+        purchase_date: "Purchase Date",
+        expiry_date: "Expiry Date",
+        paid: "Paid",
+        pending: "Pending",
+        purchased: "Purchased",
+        expires: "Expires",
 
         codes_title: "Codes Management",
         codes_subtitle: "Manage subscription groups and discount codes.",
@@ -404,6 +437,37 @@ const resources = {
         providers_subtitle: "إدارة الشركاء وحالتهم في النظام.",
         add_provider: "إضافة شريك",
         search_placeholder: "ابحث بالاسم...",
+        edit_provider: "تعديل الشريك",
+        settings: "الإعدادات",
+        active_status: "الحالة (نشط)",
+        show_menu: "إظهار زر القائمة",
+        coming_soon: "وضع قريباً",
+        max_offers: "أقصى عدد للعروض",
+        max_limited: "أقصى عروض محدودة",
+        offer_type: "نوع العروض المخصصة",
+        working_hours: "ساعات العمل",
+        from: "من",
+        to: "إلى",
+
+        dashboard_title: "لوحة التحكم",
+        dashboard_welcome: "مرحباً بك في لوحة الإدارة.",
+        total_income: "إجمالي الدخل",
+        this_month: "هذا الشهر",
+        active_subscribers: "المشتركين النشطين",
+        total_users: "إجمالي المستخدمين",
+        active_providers: "الشركاء النشطين",
+        total_providers: "إجمالي الشركاء",
+        active_offers: "العروض النشطة",
+        top_category: "أعلى تصنيف",
+        providers_by_gov: "توزع الشركاء حسب المحافظة",
+        top_providers: "أبرز الشركاء",
+        by_scans: "مرتبة حسب عدد المسحات",
+        scans: "مسحات",
+        revenue_trend: "اتجاه الإيرادات",
+        last_12_months: "أداء آخر 12 شهر",
+        income: "الدخل",
+        daily_scans: "النشاط اليومي",
+        last_30_days: "عمليات استبدال العروض خلال آخر 30 يوم",
 
         // Table Headers
         logo: "الشعار",
@@ -432,10 +496,12 @@ const resources = {
         icon: "الأيقونة",
         order: "الترتيب",
         provider_count: "عدد الشركاء",
+        edit_category: "تعديل التصنيف",
 
         governorates_title: "المحافظات",
         governorates_subtitle: "إدارة المناطق والمواقع الجغرافية.",
         add_governorate: "إضافة محافظة",
+        edit_governorate: "تعديل المحافظة",
 
         sales_points_title: "نقاط البيع",
         sales_points_subtitle: "إدارة نقاط البيع المعتمدة.",
@@ -470,7 +536,7 @@ const resources = {
         is_main: "باقة رئيسية؟",
 
         subscriptions_title: "الاشتراكات",
-        subscriptions_subtitle: "عرض سجل اشتراكات المستخدمين", // 
+        subscriptions_subtitle: "عرض سجل اشتراكات المستخدمين",
         user: "المستخدم",
         package: "الباقة",
         amount: "القيمة",

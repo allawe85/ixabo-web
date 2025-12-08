@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useGovernorates, useDeleteGovernorate } from "../../hooks/useGovernorates";
+import { 
+  useGovernorates, 
+  useDeleteGovernorate, 
+  useCreateGovernorate, 
+  useUpdateGovernorate 
+} from "../../hooks/useGovernorates";
 import {
   Table,
   TableBody,
@@ -12,6 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +25,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { 
   MoreHorizontal, 
   Plus, 
@@ -28,14 +41,70 @@ import {
   Pencil, 
   MapPin
 } from "lucide-react";
+import { toast } from "sonner";
 
 const Governorates = () => {
   const { t, i18n } = useTranslation();
   const { governorates, isLoading, error } = useGovernorates();
   const { mutate: deleteGovernorate } = useDeleteGovernorate();
+  const { mutate: createGovernorate, isPending: isCreating } = useCreateGovernorate();
+  const { mutate: updateGovernorate, isPending: isUpdating } = useUpdateGovernorate();
+
   const [search, setSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingGov, setEditingGov] = useState(null);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    Name: "",
+    NameAr: ""
+  });
 
   const isRTL = i18n.dir() === 'rtl';
+  const isSaving = isCreating || isUpdating;
+
+  // -- HANDLERS --
+
+  const handleOpenAdd = () => {
+    setEditingGov(null);
+    setFormData({ Name: "", NameAr: "" });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (gov) => {
+    setEditingGov(gov);
+    setFormData({
+      Name: gov.Name || "",
+      NameAr: gov.NameAr || ""
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!formData.Name) {
+      toast.warning(t('admin.fill_required_fields'));
+      return;
+    }
+
+    const payload = {
+      Name: formData.Name,
+      NameAr: formData.NameAr
+    };
+
+    const options = {
+      onSuccess: () => setIsModalOpen(false)
+    };
+
+    if (editingGov) {
+      updateGovernorate({ id: editingGov.ID, ...payload }, options);
+    } else {
+      createGovernorate(payload, options);
+    }
+  };
+
+  // -- RENDER --
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
@@ -59,13 +128,13 @@ const Governorates = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? "start" : "end"}>
         <DropdownMenuLabel>{t('admin.actions')}</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => console.log("Edit", gov.ID)}>
+        <DropdownMenuItem onClick={() => handleOpenEdit(gov)}>
           <Pencil className="mr-2 h-4 w-4" /> {t('admin.edit')}
         </DropdownMenuItem>
         <DropdownMenuItem 
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
           onClick={() => {
-            if(confirm(t('admin.delete_confirm'))) deleteGovernorate(gov.ID);
+            if(confirm(t('admin.confirm_delete_gov'))) deleteGovernorate(gov.ID);
           }}
         >
           <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
@@ -82,7 +151,7 @@ const Governorates = () => {
           <h1 className="text-2xl font-bold text-gray-900">{t('admin.governorates_title')}</h1>
           <p className="text-sm text-gray-500">{t('admin.governorates_subtitle')}</p>
         </div>
-        <Button className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto">
+        <Button onClick={handleOpenAdd} className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto">
           <Plus className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> 
           {t('admin.add_governorate')}
         </Button>
@@ -165,6 +234,54 @@ const Governorates = () => {
           </div>
         )}
       </div>
+
+      {/* --- ADD / EDIT MODAL --- */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingGov ? t('admin.edit_governorate') : t('admin.add_governorate')}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4 py-2">
+            
+            <div className="space-y-2">
+              <Label>{t('admin.name_en')} <span className="text-red-500">*</span></Label>
+              <Input 
+                required
+                value={formData.Name}
+                onChange={(e) => setFormData({...formData, Name: e.target.value})}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>{t('admin.name_ar')}</Label>
+              <Input 
+                className="font-cairo"
+                value={formData.NameAr}
+                onChange={(e) => setFormData({...formData, NameAr: e.target.value})}
+              />
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                {t('admin.cancel')}
+              </Button>
+              <Button type="submit" disabled={isSaving} className="bg-brand-primary">
+                {isSaving ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> {t('admin.saving')}
+                  </>
+                ) : (
+                  t('admin.save')
+                )}
+              </Button>
+            </DialogFooter>
+
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

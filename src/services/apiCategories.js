@@ -1,14 +1,8 @@
 import { supabase } from "../lib/supabase";
 
-/**
- * Fetches all categories with provider counts.
- * Uses the database view 'ViewCategory'.
- * @returns {Promise<Array>}
- */
 export async function getCategories() {
-  // Select everything from the view
   const { data, error } = await supabase
-    .from("ViewCategory")
+    .from("ViewCategory") // Using View for list
     .select("*")
     .order("Order", { ascending: true });
 
@@ -16,11 +10,30 @@ export async function getCategories() {
   return data;
 }
 
-/**
- * Deletes a category by ID.
- * @param {string | number} id
- */
 export async function deleteCategory(id) {
   const { error } = await supabase.from("category").delete().eq("ID", id);
   if (error) throw new Error(error.message);
+}
+
+// --- NEW FUNCTIONS ---
+
+export async function createCategory(category) {
+  const { data, error } = await supabase
+    .from("category") // Insert into raw table
+    .insert([category])
+    .select();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateCategory({ id, ...updates }) {
+  const { data, error } = await supabase
+    .from("category") // Update raw table
+    .update(updates)
+    .eq("ID", id)
+    .select();
+
+  if (error) throw new Error(error.message);
+  return data;
 }

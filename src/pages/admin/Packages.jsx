@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { 
   usePackages, 
@@ -6,6 +6,7 @@ import {
   useCreatePackage, 
   useUpdatePackage 
 } from "../../hooks/usePackages";
+import { uploadImage } from "../../services/storage";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox"; // Ensure you have this shadcn component or use standard input
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,19 +41,11 @@ import {
   Loader, 
   Trash2, 
   Pencil, 
-  Package
+  Package,
+  Image as ImageIcon,
+  CheckCircle2
 } from "lucide-react";
-
-// Fallback Checkbox if shadcn/ui checkbox isn't installed
-const SimpleCheckbox = ({ checked, onCheckedChange, id }) => (
-  <input 
-    type="checkbox" 
-    id={id}
-    className="h-4 w-4 rounded border-gray-300 text-brand-primary focus:ring-brand-primary"
-    checked={checked}
-    onChange={(e) => onCheckedChange(e.target.checked)}
-  />
-);
+import { toast } from "sonner";
 
 const Packages = () => {
   const { t, i18n } = useTranslation();
@@ -75,8 +68,14 @@ const Packages = () => {
     validity: "", // In days
     color: "#000000",
     order: "",
-    is_main: false
+    is_main: false,
+    ImageUrl: ""
   });
+
+  // Image Upload State
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const fileInputRef = useRef(null);
 
   const isRTL = i18n.dir() === 'rtl';
   const isSaving = isCreating || isUpdating;
@@ -85,15 +84,20 @@ const Packages = () => {
 
   const handleOpenAdd = () => {
     setEditingPkg(null);
+    setImageFile(null);
+    setImagePreview("");
     setFormData({
       Title: "", TitleAr: "", Description: "", DescriptionAr: "",
-      Price: "", validity: "30", color: "#d20e5d", order: "1", is_main: false
+      Price: "", validity: "30", color: "#d20e5d", order: "1", is_main: false,
+      ImageUrl: ""
     });
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (pkg) => {
     setEditingPkg(pkg);
+    setImageFile(null);
+    setImagePreview(pkg.ImageUrl || "");
     setFormData({
       Title: pkg.Title || "",
       TitleAr: pkg.TitleAr || "",
@@ -103,38 +107,60 @@ const Packages = () => {
       validity: pkg.validity || "",
       color: pkg.color || "#000000",
       order: pkg.order || "",
-      is_main: pkg.is_main || false
+      is_main: pkg.is_main || false,
+      ImageUrl: pkg.ImageUrl || ""
     });
     setIsModalOpen(true);
   };
 
-  const handleSubmit = (e) => {
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file)); // Local preview
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.Title || !formData.Price) {
-      alert(t('admin.fill_required_fields')); // Consider using toast
+      toast.warning(t('admin.fill_required_fields'));
       return;
+    }
+
+    let finalImageUrl = formData.ImageUrl;
+
+    // Upload Image if a new file was selected
+    if (imageFile) {
+      try {
+        toast.info("Uploading image...");
+        finalImageUrl = await uploadImage(imageFile);
+      } catch (error) {
+        toast.error("Image upload failed");
+        console.error(error);
+        return;
+      }
     }
 
     const payload = {
       ...formData,
       Price: parseFloat(formData.Price),
       validity: parseInt(formData.validity),
-      order: parseInt(formData.order)
+      order: parseInt(formData.order),
+      ImageUrl: finalImageUrl
+    };
+
+    const options = {
+      onSuccess: () => setIsModalOpen(false)
     };
 
     if (editingPkg) {
-      updatePackage({ id: editingPkg.ID, ...payload }, {
-        onSuccess: () => setIsModalOpen(false)
-      });
+      updatePackage({ id: editingPkg.ID, ...payload }, options);
     } else {
-      createPackage(payload, {
-        onSuccess: () => setIsModalOpen(false)
-      });
+      createPackage(payload, options);
     }
   };
-
-  // -- RENDER --
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
@@ -204,6 +230,7 @@ const Packages = () => {
           <TableHeader>
             <TableRow className="bg-gray-50/50">
               <TableHead className="w-[80px] text-start">{t('admin.color')}</TableHead>
+              <TableHead className="w-[80px] text-start">{t('admin.image')}</TableHead>
               <TableHead className="text-start">{t('admin.title_en')}</TableHead>
               <TableHead className="text-start">{t('admin.title_ar')}</TableHead>
               <TableHead className="text-start">{t('admin.validity')}</TableHead>
@@ -222,6 +249,15 @@ const Packages = () => {
                       title={pkg.color}
                     />
                   </TableCell>
+                  <TableCell>
+                    {pkg.ImageUrl ? (
+                      <img src={pkg.ImageUrl} alt={pkg.Title} className="h-8 w-8 object-contain rounded-md bg-gray-50" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-md bg-gray-100 flex items-center justify-center">
+                        <Package size={14} className="text-gray-400" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium text-gray-900 text-start">{pkg.Title}</TableCell>
                   <TableCell className="font-cairo text-start">{pkg.TitleAr}</TableCell>
                   <TableCell className="text-start text-gray-600">
@@ -237,7 +273,7 @@ const Packages = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-gray-500">
+                <TableCell colSpan={7} className="h-24 text-center text-gray-500">
                   {t('admin.no_results')}
                 </TableCell>
               </TableRow>
@@ -253,10 +289,14 @@ const Packages = () => {
             <Card key={pkg.ID} className="shadow-sm border-gray-100">
               <CardContent className="p-4 flex items-center gap-4">
                 <div 
-                  className="h-14 w-14 flex-shrink-0 rounded-xl flex items-center justify-center text-white shadow-sm"
+                  className="h-14 w-14 flex-shrink-0 rounded-xl flex items-center justify-center text-white shadow-sm relative overflow-hidden"
                   style={{ backgroundColor: pkg.color || '#eeeeee' }}
                 >
-                   <Package size={24} className="opacity-80" />
+                   {pkg.ImageUrl ? (
+                     <img src={pkg.ImageUrl} alt={pkg.Title} className="w-full h-full object-cover" />
+                   ) : (
+                     <Package size={24} className="opacity-80 mix-blend-multiply" />
+                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -297,6 +337,39 @@ const Packages = () => {
           
           <form onSubmit={handleSubmit} className="space-y-4 py-2">
             
+            {/* Image Upload */}
+            <div className="flex flex-col items-center justify-center gap-4 p-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                {imagePreview ? (
+                  <div className="relative w-32 h-32 group">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover rounded-lg shadow-sm"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center cursor-pointer" onClick={() => fileInputRef.current.click()}>
+                      <Pencil className="text-white h-6 w-6" />
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    className="flex flex-col items-center cursor-pointer text-gray-500 hover:text-brand-primary transition-colors"
+                    onClick={() => fileInputRef.current.click()}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-2">
+                       <ImageIcon className="h-6 w-6" />
+                    </div>
+                    <span className="text-sm font-medium">Upload Image</span>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+            </div>
+
             {/* Titles */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -392,7 +465,7 @@ const Packages = () => {
 
                {/* Is Main */}
                <div className="flex items-center gap-2">
-                 <SimpleCheckbox 
+                 <Checkbox 
                     id="is_main" 
                     checked={formData.is_main} 
                     onCheckedChange={(checked) => setFormData({...formData, is_main: checked})}

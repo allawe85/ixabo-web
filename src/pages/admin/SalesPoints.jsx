@@ -17,7 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Ensure you have this shadcn component
+import { Label } from "@/components/ui/label"; // Check if you need to install this
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,7 +31,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@/components/ui/dialog"; // Ensure you have this shadcn component
+} from "@/components/ui/dialog"; // Check if you need to install this
 import { 
   MoreHorizontal, 
   Plus, 
@@ -43,6 +43,7 @@ import {
   Phone,
   MapPin
 } from "lucide-react";
+import { toast } from "sonner"; // Using toast directly for validation messages
 
 const SalesPoints = () => {
   const { t, i18n } = useTranslation();
@@ -96,13 +97,13 @@ const SalesPoints = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // 1. Validation Logic (Missing in Flutter)
+    // 1. Validation Logic (Was missing in Flutter)
     if (!formData.Name || !formData.PhoneNumber) {
-      alert(t('admin.fill_required_fields')); // Or use a toast
+      toast.warning(t('admin.fill_required_fields')); 
       return;
     }
 
-    // 2. Prepare Payload
+    // 2. Prepare Payload (Convert strings to numbers if needed)
     const payload = {
       ...formData,
       Latitude: formData.Latitude ? parseFloat(formData.Latitude) : null,
@@ -151,7 +152,7 @@ const SalesPoints = () => {
         <DropdownMenuItem 
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
           onClick={() => {
-            if(confirm(t('admin.delete_confirm'))) deleteSalesPoint(sp.ID);
+            if(confirm(t('admin.confirm_delete_sales_point'))) deleteSalesPoint(sp.ID);
           }}
         >
           <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
@@ -236,6 +237,7 @@ const SalesPoints = () => {
                 <div className="h-12 w-12 flex-shrink-0 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
                    <Store size={24} />
                 </div>
+
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <div>

@@ -1,6 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { useProviders, useDeleteProvider } from "../../hooks/useProviders";
+import { 
+  useProviders, 
+  useDeleteProvider, 
+  useCreateProvider, 
+  useUpdateProvider,
+  usePersonalizedOfferTypes 
+} from "../../hooks/useProviders";
+import { uploadImage } from "../../services/storage";
 import {
   Table,
   TableBody,
@@ -12,6 +19,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +28,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { 
   MoreHorizontal, 
   Plus, 
@@ -26,16 +42,141 @@ import {
   Loader, 
   Trash2, 
   Pencil, 
-  Eye 
+  Eye,
+  Store,
+  Image as ImageIcon,
+  Clock
 } from "lucide-react";
+import { toast } from "sonner";
 
 const Providers = () => {
   const { t, i18n } = useTranslation();
   const { providers, isLoading, error } = useProviders();
+  const { types: offerTypes } = usePersonalizedOfferTypes(); // Fetch Dropdown Data
+  
   const { mutate: deleteProvider } = useDeleteProvider();
+  const { mutate: createProvider, isPending: isCreating } = useCreateProvider();
+  const { mutate: updateProvider, isPending: isUpdating } = useUpdateProvider();
+
   const [search, setSearch] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState(null);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    Name: "",
+    NameAr: "",
+    GroupNum: "",
+    Order: "999",
+    MaxOffers: "5",
+    MaxLimitedOffers: "2",
+    WorkingFrom: "10:00",
+    WorkingTo: "22:00",
+    personalized_offer_type_id: "1",
+    ShowMenu: true,
+    IsActive: true,
+    IsComingSoon: false,
+    ImageUrl: ""
+  });
+
+  // Image Upload State
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const fileInputRef = useRef(null);
 
   const isRTL = i18n.dir() === 'rtl';
+  const isSaving = isCreating || isUpdating;
+
+  // -- HANDLERS --
+
+  const handleOpenAdd = () => {
+    setEditingProvider(null);
+    setImageFile(null);
+    setImagePreview("");
+    setFormData({
+      Name: "", NameAr: "", GroupNum: "", Order: "999",
+      MaxOffers: "5", MaxLimitedOffers: "2",
+      WorkingFrom: "10:00", WorkingTo: "22:00",
+      personalized_offer_type_id: "1",
+      ShowMenu: true, IsActive: true, IsComingSoon: false,
+      ImageUrl: ""
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEdit = (p) => {
+    setEditingProvider(p);
+    setImageFile(null);
+    setImagePreview(p.ImageUrl || "");
+    setFormData({
+      Name: p.Name || "",
+      NameAr: p.NameAr || "",
+      GroupNum: p.GroupNum?.toString() || "",
+      Order: p.Order?.toString() || "999",
+      MaxOffers: p.MaxOffers?.toString() || "5",
+      MaxLimitedOffers: p.MaxLimitedOffers?.toString() || "2",
+      WorkingFrom: p.WorkingFrom || "10:00",
+      WorkingTo: p.WorkingTo || "22:00",
+      personalized_offer_type_id: p.personalized_offer_type_id?.toString() || "1",
+      ShowMenu: p.ShowMenu ?? true,
+      IsActive: p.IsActive ?? true,
+      IsComingSoon: p.IsComingSoon ?? false,
+      ImageUrl: p.ImageUrl || ""
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!formData.Name) {
+      toast.warning(t('admin.fill_required_fields'));
+      return;
+    }
+
+    let finalImageUrl = formData.ImageUrl;
+
+    // Upload Image
+    if (imageFile) {
+      try {
+        toast.info("Uploading logo...");
+        finalImageUrl = await uploadImage(imageFile);
+      } catch (error) {
+        toast.error("Image upload failed");
+        return;
+      }
+    }
+
+    const payload = {
+      ...formData,
+      GroupNum: formData.GroupNum ? parseInt(formData.GroupNum) : null,
+      Order: parseInt(formData.Order),
+      MaxOffers: parseInt(formData.MaxOffers),
+      MaxLimitedOffers: parseInt(formData.MaxLimitedOffers),
+      personalized_offer_type_id: parseInt(formData.personalized_offer_type_id),
+      ImageUrl: finalImageUrl
+    };
+
+    const options = {
+      onSuccess: () => setIsModalOpen(false)
+    };
+
+    if (editingProvider) {
+      updateProvider({ id: editingProvider.ID, ...payload }, options);
+    } else {
+      createProvider(payload, options);
+    }
+  };
+
+  // -- RENDER --
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
@@ -50,20 +191,6 @@ const Providers = () => {
     p.NameAr?.includes(search)
   );
 
-  // Helper to render Status Badge
-  const StatusBadge = ({ isActive }) => (
-    isActive ? (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">
-        {t('admin.active')}
-      </span>
-    ) : (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-        {t('admin.inactive')}
-      </span>
-    )
-  );
-
-  // Helper for Action Menu
   const ActionMenu = ({ provider }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -73,16 +200,13 @@ const Providers = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? "start" : "end"}>
         <DropdownMenuLabel>{t('admin.actions')}</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => console.log("View", provider.ID)}>
-          <Eye className="mr-2 h-4 w-4" /> {t('admin.view')}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => console.log("Edit", provider.ID)}>
+        <DropdownMenuItem onClick={() => handleOpenEdit(provider)}>
           <Pencil className="mr-2 h-4 w-4" /> {t('admin.edit')}
         </DropdownMenuItem>
         <DropdownMenuItem 
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
           onClick={() => {
-            if(confirm(t('admin.delete_confirm'))) deleteProvider(provider.ID);
+            if(confirm(t('admin.confirm_delete_provider'))) deleteProvider(provider.ID);
           }}
         >
           <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
@@ -93,13 +217,13 @@ const Providers = () => {
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{t('admin.providers_title')}</h1>
           <p className="text-sm text-gray-500">{t('admin.providers_subtitle')}</p>
         </div>
-        <Button className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto">
+        <Button onClick={handleOpenAdd} className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto">
           <Plus className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> 
           {t('admin.add_provider')}
         </Button>
@@ -116,15 +240,13 @@ const Providers = () => {
         />
       </div>
 
-      {/* --- DESKTOP VIEW: TABLE (Hidden on Mobile) --- */}
+      {/* --- DESKTOP TABLE --- */}
       <div className="hidden md:block border rounded-xl bg-white shadow-sm overflow-hidden">
-        {/* FIX: Added dir prop to force direction */}
         <Table dir={isRTL ? "rtl" : "ltr"}>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
               <TableHead className="w-[80px] text-start">{t('admin.logo')}</TableHead>
               <TableHead className="text-start">{t('admin.name_en')}</TableHead>
-              {/* FIX: Changed text-right to text-start to follow direction */}
               <TableHead className="text-start">{t('admin.name_ar')}</TableHead>
               <TableHead className="text-start">{t('admin.group')}</TableHead>
               <TableHead className="text-start">{t('admin.status')}</TableHead>
@@ -147,7 +269,6 @@ const Providers = () => {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium text-gray-900 text-start">{provider.Name}</TableCell>
-                  {/* FIX: Changed text-right to text-start here as well */}
                   <TableCell className="font-cairo text-start">{provider.NameAr}</TableCell>
                   <TableCell className="text-start">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
@@ -155,7 +276,15 @@ const Providers = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-start">
-                    <StatusBadge isActive={provider.IsActive} />
+                    {provider.IsActive ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                        {t('admin.active')}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        {t('admin.inactive')}
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     {provider.offer ? provider.offer[0]?.count : 0}
@@ -176,13 +305,12 @@ const Providers = () => {
         </Table>
       </div>
 
-      {/* --- MOBILE VIEW: CARDS (Hidden on Desktop) --- */}
+      {/* --- MOBILE CARDS --- */}
       <div className="md:hidden grid grid-cols-1 gap-4">
         {filteredProviders?.length > 0 ? (
           filteredProviders.map((provider) => (
             <Card key={provider.ID} className="shadow-sm border-gray-100">
               <CardContent className="p-4 flex items-start gap-4">
-                {/* Logo Column */}
                 <div className="h-16 w-16 flex-shrink-0 rounded-xl border border-gray-100 p-2 bg-white flex items-center justify-center">
                   <img 
                     src={provider.ImageUrl} 
@@ -190,27 +318,21 @@ const Providers = () => {
                     className="max-h-full max-w-full object-contain" 
                   />
                 </div>
-
-                {/* Info Column */}
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-bold text-gray-900 line-clamp-1">{provider.Name}</h3>
                       <p className="text-xs text-gray-500 font-cairo">{provider.NameAr}</p>
                     </div>
-                    {/* Actions Dropdown */}
                     <ActionMenu provider={provider} />
                   </div>
-
-                  {/* Metadata Row */}
                   <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <StatusBadge isActive={provider.IsActive} />
-                    <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded-md">
-                      Offers: {provider.offer ? provider.offer[0]?.count : 0}
-                    </span>
-                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
-                      Grp {provider.GroupNum}
-                    </span>
+                    {provider.IsActive ? (
+                      <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{t('admin.active')}</span>
+                    ) : (
+                      <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">{t('admin.inactive')}</span>
+                    )}
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">Grp {provider.GroupNum}</span>
                   </div>
                 </div>
               </CardContent>
@@ -223,6 +345,190 @@ const Providers = () => {
         )}
       </div>
 
+      {/* --- ADD / EDIT MODAL --- */}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingProvider ? t('admin.edit_provider') : t('admin.add_provider')}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-6 py-2">
+            
+            {/* 1. Image & Basic Info */}
+            <div className="flex flex-col sm:flex-row gap-6">
+               {/* Image */}
+               <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                  <div 
+                    className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
+                    onClick={() => fileInputRef.current.click()}
+                  >
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Logo" className="w-full h-full object-contain" />
+                    ) : (
+                      <ImageIcon className="text-gray-400 h-8 w-8" />
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500">{t('admin.logo')}</span>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+               </div>
+
+               {/* Names */}
+               <div className="flex-1 space-y-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t('admin.name_en')} <span className="text-red-500">*</span></Label>
+                      <Input 
+                        required
+                        value={formData.Name}
+                        onChange={(e) => setFormData({...formData, Name: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('admin.name_ar')}</Label>
+                      <Input 
+                        className="font-cairo"
+                        value={formData.NameAr}
+                        onChange={(e) => setFormData({...formData, NameAr: e.target.value})}
+                      />
+                    </div>
+                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t('admin.group')}</Label>
+                      <Input 
+                        type="number"
+                        value={formData.GroupNum}
+                        onChange={(e) => setFormData({...formData, GroupNum: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('admin.order')}</Label>
+                      <Input 
+                        type="number"
+                        value={formData.Order}
+                        onChange={(e) => setFormData({...formData, Order: e.target.value})}
+                      />
+                    </div>
+                 </div>
+               </div>
+            </div>
+
+            {/* 2. Settings */}
+            <div className="p-4 bg-gray-50 rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                   <h4 className="text-sm font-semibold text-gray-900">{t('admin.settings')}</h4>
+                   <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="active" 
+                        checked={formData.IsActive} 
+                        onCheckedChange={(c) => setFormData({...formData, IsActive: c})}
+                      />
+                      <Label htmlFor="active">{t('admin.active_status')}</Label>
+                   </div>
+                   <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="menu" 
+                        checked={formData.ShowMenu} 
+                        onCheckedChange={(c) => setFormData({...formData, ShowMenu: c})}
+                      />
+                      <Label htmlFor="menu">{t('admin.show_menu')}</Label>
+                   </div>
+                   <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="coming" 
+                        checked={formData.IsComingSoon} 
+                        onCheckedChange={(c) => setFormData({...formData, IsComingSoon: c})}
+                      />
+                      <Label htmlFor="coming">{t('admin.coming_soon')}</Label>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                   <h4 className="text-sm font-semibold text-gray-900">{t('admin.offers')}</h4>
+                   <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs">{t('admin.max_offers')}</Label>
+                        <Input 
+                          type="number" 
+                          value={formData.MaxOffers} 
+                          onChange={(e) => setFormData({...formData, MaxOffers: e.target.value})}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">{t('admin.max_limited')}</Label>
+                        <Input 
+                          type="number" 
+                          value={formData.MaxLimitedOffers} 
+                          onChange={(e) => setFormData({...formData, MaxLimitedOffers: e.target.value})}
+                        />
+                      </div>
+                   </div>
+                   <div className="space-y-2">
+                      <Label className="text-xs">{t('admin.offer_type')}</Label>
+                      <select 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={formData.personalized_offer_type_id}
+                        onChange={(e) => setFormData({...formData, personalized_offer_type_id: e.target.value})}
+                      >
+                        {offerTypes?.map(type => (
+                          <option key={type.id} value={type.id}>
+                            {isRTL && type.name_ar ? type.name_ar : type.name || type.name_en_ar}
+                          </option>
+                        ))}
+                      </select>
+                   </div>
+                </div>
+            </div>
+
+            {/* 3. Working Hours */}
+            <div className="space-y-2">
+               <Label className="flex items-center gap-2"><Clock size={14}/> {t('admin.working_hours')}</Label>
+               <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Label className="text-xs text-gray-500">{t('admin.from')}</Label>
+                    <Input 
+                      type="time" 
+                      value={formData.WorkingFrom} 
+                      onChange={(e) => setFormData({...formData, WorkingFrom: e.target.value})}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label className="text-xs text-gray-500">{t('admin.to')}</Label>
+                    <Input 
+                      type="time" 
+                      value={formData.WorkingTo} 
+                      onChange={(e) => setFormData({...formData, WorkingTo: e.target.value})}
+                    />
+                  </div>
+               </div>
+            </div>
+
+            <DialogFooter className="pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                {t('admin.cancel')}
+              </Button>
+              <Button type="submit" disabled={isSaving} className="bg-brand-primary">
+                {isSaving ? (
+                  <>
+                    <Loader className="mr-2 h-4 w-4 animate-spin" /> {t('admin.saving')}
+                  </>
+                ) : (
+                  t('admin.save')
+                )}
+              </Button>
+            </DialogFooter>
+
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

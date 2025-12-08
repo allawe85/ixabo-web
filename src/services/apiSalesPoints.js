@@ -15,7 +15,7 @@ export async function deleteSalesPoint(id) {
   if (error) throw new Error(error.message);
 }
 
-// --- NEW FUNCTIONS ---
+// --- NEW: Create & Update Logic ---
 
 export async function createSalesPoint(newPoint) {
   const { data, error } = await supabase

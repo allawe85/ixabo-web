@@ -5,7 +5,7 @@ import {
   createSalesPoint, 
   updateSalesPoint 
 } from "../services/apiSalesPoints";
-import { toast } from "sonner"; // Assuming you have sonner or similar for toasts
+import { toast } from "sonner"; 
 
 export function useSalesPoints() {
   const { data: salesPoints, isLoading, error } = useQuery({

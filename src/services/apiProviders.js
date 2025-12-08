@@ -1,9 +1,5 @@
 import { supabase } from "../lib/supabase";
 
-/**
- * Fetches all providers with their offer counts.
- * @returns {Promise<Array>}
- */
 export async function getProviders() {
   const { data, error } = await supabase
     .from("provider")
@@ -14,8 +10,43 @@ export async function getProviders() {
   return data;
 }
 
-/// @ts-ignore
 export async function deleteProvider(id) {
   const { error } = await supabase.from("provider").delete().eq("ID", id);
   if (error) throw new Error(error.message);
+}
+
+// --- NEW FUNCTIONS ---
+
+/**
+ * Fetches personalized offer types for the dropdown.
+ */
+export async function getPersonalizedOfferTypes() {
+  const { data, error } = await supabase
+    .from("personalized_offer_type")
+    .select("*")
+    .order("id", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function createProvider(provider) {
+  const { data, error } = await supabase
+    .from("provider")
+    .insert([provider])
+    .select();
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateProvider({ id, ...updates }) {
+  const { data, error } = await supabase
+    .from("provider")
+    .update(updates)
+    .eq("ID", id)
+    .select();
+
+  if (error) throw new Error(error.message);
+  return data;
 }
