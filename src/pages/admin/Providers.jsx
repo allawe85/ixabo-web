@@ -48,6 +48,10 @@ import {
   Clock,
   Grid,
   MapPin,
+  Menu as MenuIcon,
+  Phone,
+  Link as LinkIcon,
+  QrCode,
 } from "lucide-react";
 import AssignModal from "../../components/admin/providers/AssignModal";
 import { toast } from "sonner";
@@ -59,6 +63,14 @@ import {
   useProviderGovernorates,
   useUpdateProviderGovernorates,
 } from "../../hooks/useProviderAssigns";
+import {
+  useProviderMenu,
+  useMenuMutations,
+  useProviderGallery,
+  useGalleryMutations,
+} from "../../hooks/useProviderContent";
+import MediaManager from "../../components/admin/providers/MediaManager";
+import DetailManager from "../../components/admin/providers/DetailManager"; // Import
 
 const Providers = () => {
   const { t, i18n } = useTranslation();
@@ -75,6 +87,9 @@ const Providers = () => {
 
   const { categories } = useCategories();
   const { governorates } = useGovernorates();
+
+  const [detailType, setDetailType] = useState(null); // 'NUMBER', 'LOCATION', 'LINK'
+
   // -- Assign Logic --
   const [assignType, setAssignType] = useState(null); // 'CATEGORY' or 'GOV' or null
   const [targetProviderId, setTargetProviderId] = useState(null);
@@ -89,6 +104,22 @@ const Providers = () => {
     useUpdateProviderCategories();
   const { mutate: saveGovs, isPending: savingGovs } =
     useUpdateProviderGovernorates();
+
+  // -- Media Manager Logic --
+  const [mediaType, setMediaType] = useState(null); // 'MENU' or 'GALLERY' or null
+  //const [targetProviderId, setTargetProviderId] = useState(null);
+
+  // Fetch data (conditional)
+  const { menuItems, isLoading: loadingMenu } = useProviderMenu(
+    mediaType === "MENU" ? targetProviderId : null
+  );
+  const { galleryItems, isLoading: loadingGallery } = useProviderGallery(
+    mediaType === "GALLERY" ? targetProviderId : null
+  );
+
+  const menuMutations = useMenuMutations(targetProviderId);
+  const galleryMutations = useGalleryMutations(targetProviderId);
+
   // Form State
   const [formData, setFormData] = useState({
     Name: "",
@@ -232,6 +263,17 @@ const Providers = () => {
       );
     }
   };
+
+  const handleOpenMedia = (provider, type) => {
+    setTargetProviderId(provider.ID);
+    setMediaType(type);
+  };
+
+  const handleOpenDetails = (provider, type) => {
+    setTargetProviderId(provider.ID);
+    setDetailType(type);
+  };
+
   // -- RENDER --
 
   if (isLoading)
@@ -268,6 +310,26 @@ const Providers = () => {
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleOpenAssign(provider, "GOV")}>
           <MapPin className="mr-2 h-4 w-4" /> {t("admin.assign_governorates")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenMedia(provider, "MENU")}>
+          <MenuIcon className="mr-2 h-4 w-4" /> {t("admin.manage_menu")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenMedia(provider, "GALLERY")}>
+          <ImageIcon className="mr-2 h-4 w-4" /> {t("admin.manage_gallery")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenDetails(provider, "NUMBER")}>
+          <Phone className="mr-2 h-4 w-4" /> {t("admin.manage_numbers")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => handleOpenDetails(provider, "LOCATION")}
+        >
+          <MapPin className="mr-2 h-4 w-4" /> {t("admin.manage_locations")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenDetails(provider, "LINK")}>
+          <LinkIcon className="mr-2 h-4 w-4" /> {t("admin.manage_links")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => console.log("Show Scans")}>
+          <QrCode className="mr-2 h-4 w-4" /> {t("admin.view_scans")}
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
@@ -700,6 +762,30 @@ const Providers = () => {
         isLoadingData={assignType === "CATEGORY" ? loadingCats : loadingGovs}
         isSaving={assignType === "CATEGORY" ? savingCats : savingGovs}
         onSave={handleSaveAssign}
+      />
+
+      {/* --- MEDIA MANAGER MODAL --- */}
+      <MediaManager
+        isOpen={!!mediaType}
+        onClose={() => setMediaType(null)}
+        title={
+          mediaType === "MENU"
+            ? t("admin.manage_menu")
+            : t("admin.manage_gallery")
+        }
+        items={mediaType === "MENU" ? menuItems : galleryItems}
+        isLoading={mediaType === "MENU" ? loadingMenu : loadingGallery}
+        mutations={mediaType === "MENU" ? menuMutations : galleryMutations}
+        providerId={targetProviderId}
+        hasDescription={mediaType === "GALLERY"} // Only gallery has descriptions
+      />
+
+      {/* --- DETAIL MANAGER MODAL --- */}
+      <DetailManager
+        isOpen={!!detailType}
+        onClose={() => setDetailType(null)}
+        type={detailType}
+        providerId={targetProviderId}
       />
     </div>
   );
