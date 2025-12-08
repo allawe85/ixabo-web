@@ -1,11 +1,11 @@
 import React, { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  useProviders, 
-  useDeleteProvider, 
-  useCreateProvider, 
+import {
+  useProviders,
+  useDeleteProvider,
+  useCreateProvider,
   useUpdateProvider,
-  usePersonalizedOfferTypes 
+  usePersonalizedOfferTypes,
 } from "../../hooks/useProviders";
 import { uploadImage } from "../../services/storage";
 import {
@@ -35,25 +35,36 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { 
-  MoreHorizontal, 
-  Plus, 
-  Search, 
-  Loader, 
-  Trash2, 
-  Pencil, 
+import {
+  MoreHorizontal,
+  Plus,
+  Search,
+  Loader,
+  Trash2,
+  Pencil,
   Eye,
   Store,
   Image as ImageIcon,
-  Clock
+  Clock,
+  Grid,
+  MapPin,
 } from "lucide-react";
+import AssignModal from "../../components/admin/providers/AssignModal";
 import { toast } from "sonner";
+import { useCategories } from "../../hooks/useCategories"; // To get list of all cats
+import { useGovernorates } from "../../hooks/useGovernorates"; // To get list of all govs
+import {
+  useProviderCategories,
+  useUpdateProviderCategories,
+  useProviderGovernorates,
+  useUpdateProviderGovernorates,
+} from "../../hooks/useProviderAssigns";
 
 const Providers = () => {
   const { t, i18n } = useTranslation();
   const { providers, isLoading, error } = useProviders();
   const { types: offerTypes } = usePersonalizedOfferTypes(); // Fetch Dropdown Data
-  
+
   const { mutate: deleteProvider } = useDeleteProvider();
   const { mutate: createProvider, isPending: isCreating } = useCreateProvider();
   const { mutate: updateProvider, isPending: isUpdating } = useUpdateProvider();
@@ -62,6 +73,22 @@ const Providers = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState(null);
 
+  const { categories } = useCategories();
+  const { governorates } = useGovernorates();
+  // -- Assign Logic --
+  const [assignType, setAssignType] = useState(null); // 'CATEGORY' or 'GOV' or null
+  const [targetProviderId, setTargetProviderId] = useState(null);
+
+  // Fetch current assignments (only runs when we have a target ID)
+  const { assignedIds: currentCatIds, isLoading: loadingCats } =
+    useProviderCategories(targetProviderId);
+  const { assignedIds: currentGovIds, isLoading: loadingGovs } =
+    useProviderGovernorates(targetProviderId);
+
+  const { mutate: saveCats, isPending: savingCats } =
+    useUpdateProviderCategories();
+  const { mutate: saveGovs, isPending: savingGovs } =
+    useUpdateProviderGovernorates();
   // Form State
   const [formData, setFormData] = useState({
     Name: "",
@@ -76,7 +103,7 @@ const Providers = () => {
     ShowMenu: true,
     IsActive: true,
     IsComingSoon: false,
-    ImageUrl: ""
+    ImageUrl: "",
   });
 
   // Image Upload State
@@ -84,7 +111,7 @@ const Providers = () => {
   const [imagePreview, setImagePreview] = useState("");
   const fileInputRef = useRef(null);
 
-  const isRTL = i18n.dir() === 'rtl';
+  const isRTL = i18n.dir() === "rtl";
   const isSaving = isCreating || isUpdating;
 
   // -- HANDLERS --
@@ -94,12 +121,19 @@ const Providers = () => {
     setImageFile(null);
     setImagePreview("");
     setFormData({
-      Name: "", NameAr: "", GroupNum: "", Order: "999",
-      MaxOffers: "5", MaxLimitedOffers: "2",
-      WorkingFrom: "10:00", WorkingTo: "22:00",
+      Name: "",
+      NameAr: "",
+      GroupNum: "",
+      Order: "999",
+      MaxOffers: "5",
+      MaxLimitedOffers: "2",
+      WorkingFrom: "10:00",
+      WorkingTo: "22:00",
       personalized_offer_type_id: "1",
-      ShowMenu: true, IsActive: true, IsComingSoon: false,
-      ImageUrl: ""
+      ShowMenu: true,
+      IsActive: true,
+      IsComingSoon: false,
+      ImageUrl: "",
     });
     setIsModalOpen(true);
   };
@@ -117,11 +151,12 @@ const Providers = () => {
       MaxLimitedOffers: p.MaxLimitedOffers?.toString() || "2",
       WorkingFrom: p.WorkingFrom || "10:00",
       WorkingTo: p.WorkingTo || "22:00",
-      personalized_offer_type_id: p.personalized_offer_type_id?.toString() || "1",
+      personalized_offer_type_id:
+        p.personalized_offer_type_id?.toString() || "1",
       ShowMenu: p.ShowMenu ?? true,
       IsActive: p.IsActive ?? true,
       IsComingSoon: p.IsComingSoon ?? false,
-      ImageUrl: p.ImageUrl || ""
+      ImageUrl: p.ImageUrl || "",
     });
     setIsModalOpen(true);
   };
@@ -138,7 +173,7 @@ const Providers = () => {
     e.preventDefault();
 
     if (!formData.Name) {
-      toast.warning(t('admin.fill_required_fields'));
+      toast.warning(t("admin.fill_required_fields"));
       return;
     }
 
@@ -162,11 +197,11 @@ const Providers = () => {
       MaxOffers: parseInt(formData.MaxOffers),
       MaxLimitedOffers: parseInt(formData.MaxLimitedOffers),
       personalized_offer_type_id: parseInt(formData.personalized_offer_type_id),
-      ImageUrl: finalImageUrl
+      ImageUrl: finalImageUrl,
     };
 
     const options = {
-      onSuccess: () => setIsModalOpen(false)
+      onSuccess: () => setIsModalOpen(false),
     };
 
     if (editingProvider) {
@@ -175,20 +210,43 @@ const Providers = () => {
       createProvider(payload, options);
     }
   };
+  const handleOpenAssign = (provider, type) => {
+    setTargetProviderId(provider.ID);
+    setAssignType(type);
+  };
 
+  const handleSaveAssign = (selectedIds) => {
+    if (assignType === "CATEGORY") {
+      saveCats(
+        { providerId: targetProviderId, categoryIds: selectedIds },
+        {
+          onSuccess: () => setAssignType(null),
+        }
+      );
+    } else {
+      saveGovs(
+        { providerId: targetProviderId, governorateIds: selectedIds },
+        {
+          onSuccess: () => setAssignType(null),
+        }
+      );
+    }
+  };
   // -- RENDER --
 
-  if (isLoading) return (
-    <div className="flex items-center justify-center h-96">
-      <Loader className="animate-spin text-brand-primary" size={32} />
-    </div>
-  );
+  if (isLoading)
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Loader className="animate-spin text-brand-primary" size={32} />
+      </div>
+    );
 
   if (error) return <div className="text-red-500">Error: {error.message}</div>;
 
-  const filteredProviders = providers?.filter((p) =>
-    p.Name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.NameAr?.includes(search)
+  const filteredProviders = providers?.filter(
+    (p) =>
+      p.Name?.toLowerCase().includes(search.toLowerCase()) ||
+      p.NameAr?.includes(search)
   );
 
   const ActionMenu = ({ provider }) => (
@@ -199,17 +257,26 @@ const Providers = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? "start" : "end"}>
-        <DropdownMenuLabel>{t('admin.actions')}</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("admin.actions")}</DropdownMenuLabel>
         <DropdownMenuItem onClick={() => handleOpenEdit(provider)}>
-          <Pencil className="mr-2 h-4 w-4" /> {t('admin.edit')}
+          <Pencil className="mr-2 h-4 w-4" /> {t("admin.edit")}
         </DropdownMenuItem>
-        <DropdownMenuItem 
+        <DropdownMenuItem
+          onClick={() => handleOpenAssign(provider, "CATEGORY")}
+        >
+          <Grid className="mr-2 h-4 w-4" /> {t("admin.assign_categories")}
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleOpenAssign(provider, "GOV")}>
+          <MapPin className="mr-2 h-4 w-4" /> {t("admin.assign_governorates")}
+        </DropdownMenuItem>
+        <DropdownMenuItem
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
           onClick={() => {
-            if(confirm(t('admin.confirm_delete_provider'))) deleteProvider(provider.ID);
+            if (confirm(t("admin.confirm_delete_provider")))
+              deleteProvider(provider.ID);
           }}
         >
-          <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
+          <Trash2 className="mr-2 h-4 w-4" /> {t("admin.delete")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -220,21 +287,33 @@ const Providers = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{t('admin.providers_title')}</h1>
-          <p className="text-sm text-gray-500">{t('admin.providers_subtitle')}</p>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {t("admin.providers_title")}
+          </h1>
+          <p className="text-sm text-gray-500">
+            {t("admin.providers_subtitle")}
+          </p>
         </div>
-        <Button onClick={handleOpenAdd} className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto">
-          <Plus className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} /> 
-          {t('admin.add_provider')}
+        <Button
+          onClick={handleOpenAdd}
+          className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto"
+        >
+          <Plus className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+          {t("admin.add_provider")}
         </Button>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-2 w-full sm:max-w-sm relative">
-        <Search className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} size={18} />
-        <Input 
-          placeholder={t('admin.search_placeholder')} 
-          className={isRTL ? 'pr-10' : 'pl-10'}
+        <Search
+          className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${
+            isRTL ? "right-3" : "left-3"
+          }`}
+          size={18}
+        />
+        <Input
+          placeholder={t("admin.search_placeholder")}
+          className={isRTL ? "pr-10" : "pl-10"}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -245,13 +324,15 @@ const Providers = () => {
         <Table dir={isRTL ? "rtl" : "ltr"}>
           <TableHeader>
             <TableRow className="bg-gray-50/50">
-              <TableHead className="w-[80px] text-start">{t('admin.logo')}</TableHead>
-              <TableHead className="text-start">{t('admin.name_en')}</TableHead>
-              <TableHead className="text-start">{t('admin.name_ar')}</TableHead>
-              <TableHead className="text-start">{t('admin.group')}</TableHead>
-              <TableHead className="text-start">{t('admin.status')}</TableHead>
-              <TableHead className="text-center">{t('admin.offers')}</TableHead>
-              <TableHead className="text-end">{t('admin.actions')}</TableHead>
+              <TableHead className="w-[80px] text-start">
+                {t("admin.logo")}
+              </TableHead>
+              <TableHead className="text-start">{t("admin.name_en")}</TableHead>
+              <TableHead className="text-start">{t("admin.name_ar")}</TableHead>
+              <TableHead className="text-start">{t("admin.group")}</TableHead>
+              <TableHead className="text-start">{t("admin.status")}</TableHead>
+              <TableHead className="text-center">{t("admin.offers")}</TableHead>
+              <TableHead className="text-end">{t("admin.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -260,16 +341,20 @@ const Providers = () => {
                 <TableRow key={provider.ID}>
                   <TableCell>
                     <div className="h-10 w-10 rounded-lg border border-gray-100 p-1 bg-white">
-                      <img 
-                        src={provider.ImageUrl} 
-                        alt={provider.Name} 
-                        className="h-full w-full object-contain" 
+                      <img
+                        src={provider.ImageUrl}
+                        alt={provider.Name}
+                        className="h-full w-full object-contain"
                         loading="lazy"
                       />
                     </div>
                   </TableCell>
-                  <TableCell className="font-medium text-gray-900 text-start">{provider.Name}</TableCell>
-                  <TableCell className="font-cairo text-start">{provider.NameAr}</TableCell>
+                  <TableCell className="font-medium text-gray-900 text-start">
+                    {provider.Name}
+                  </TableCell>
+                  <TableCell className="font-cairo text-start">
+                    {provider.NameAr}
+                  </TableCell>
                   <TableCell className="text-start">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
                       Grp {provider.GroupNum}
@@ -278,11 +363,11 @@ const Providers = () => {
                   <TableCell className="text-start">
                     {provider.IsActive ? (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
-                        {t('admin.active')}
+                        {t("admin.active")}
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                        {t('admin.inactive')}
+                        {t("admin.inactive")}
                       </span>
                     )}
                   </TableCell>
@@ -296,8 +381,11 @@ const Providers = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-gray-500">
-                  {t('admin.no_results')}
+                <TableCell
+                  colSpan={7}
+                  className="h-24 text-center text-gray-500"
+                >
+                  {t("admin.no_results")}
                 </TableCell>
               </TableRow>
             )}
@@ -312,27 +400,37 @@ const Providers = () => {
             <Card key={provider.ID} className="shadow-sm border-gray-100">
               <CardContent className="p-4 flex items-start gap-4">
                 <div className="h-16 w-16 flex-shrink-0 rounded-xl border border-gray-100 p-2 bg-white flex items-center justify-center">
-                  <img 
-                    src={provider.ImageUrl} 
-                    alt={provider.Name} 
-                    className="max-h-full max-w-full object-contain" 
+                  <img
+                    src={provider.ImageUrl}
+                    alt={provider.Name}
+                    className="max-h-full max-w-full object-contain"
                   />
                 </div>
                 <div className="flex-1 space-y-2">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-bold text-gray-900 line-clamp-1">{provider.Name}</h3>
-                      <p className="text-xs text-gray-500 font-cairo">{provider.NameAr}</p>
+                      <h3 className="font-bold text-gray-900 line-clamp-1">
+                        {provider.Name}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-cairo">
+                        {provider.NameAr}
+                      </p>
                     </div>
                     <ActionMenu provider={provider} />
                   </div>
                   <div className="flex flex-wrap items-center gap-2 mt-2">
                     {provider.IsActive ? (
-                      <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">{t('admin.active')}</span>
+                      <span className="text-xs text-green-700 bg-green-50 px-2 py-1 rounded">
+                        {t("admin.active")}
+                      </span>
                     ) : (
-                      <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">{t('admin.inactive')}</span>
+                      <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                        {t("admin.inactive")}
+                      </span>
                     )}
-                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">Grp {provider.GroupNum}</span>
+                    <span className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      Grp {provider.GroupNum}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -340,7 +438,7 @@ const Providers = () => {
           ))
         ) : (
           <div className="text-center py-10 text-gray-500">
-            {t('admin.no_results')}
+            {t("admin.no_results")}
           </div>
         )}
       </div>
@@ -350,185 +448,259 @@ const Providers = () => {
         <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingProvider ? t('admin.edit_provider') : t('admin.add_provider')}
+              {editingProvider
+                ? t("admin.edit_provider")
+                : t("admin.add_provider")}
             </DialogTitle>
           </DialogHeader>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6 py-2">
-            
             {/* 1. Image & Basic Info */}
             <div className="flex flex-col sm:flex-row gap-6">
-               {/* Image */}
-               <div className="flex-shrink-0 flex flex-col items-center gap-3">
-                  <div 
-                    className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
-                    onClick={() => fileInputRef.current.click()}
-                  >
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Logo" className="w-full h-full object-contain" />
-                    ) : (
-                      <ImageIcon className="text-gray-400 h-8 w-8" />
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-500">{t('admin.logo')}</span>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-               </div>
+              {/* Image */}
+              <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                <div
+                  className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-50 hover:bg-gray-100 transition-colors"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  {imagePreview ? (
+                    <img
+                      src={imagePreview}
+                      alt="Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <ImageIcon className="text-gray-400 h-8 w-8" />
+                  )}
+                </div>
+                <span className="text-xs text-gray-500">{t("admin.logo")}</span>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </div>
 
-               {/* Names */}
-               <div className="flex-1 space-y-4">
-                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t('admin.name_en')} <span className="text-red-500">*</span></Label>
-                      <Input 
-                        required
-                        value={formData.Name}
-                        onChange={(e) => setFormData({...formData, Name: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('admin.name_ar')}</Label>
-                      <Input 
-                        className="font-cairo"
-                        value={formData.NameAr}
-                        onChange={(e) => setFormData({...formData, NameAr: e.target.value})}
-                      />
-                    </div>
-                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>{t('admin.group')}</Label>
-                      <Input 
-                        type="number"
-                        value={formData.GroupNum}
-                        onChange={(e) => setFormData({...formData, GroupNum: e.target.value})}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>{t('admin.order')}</Label>
-                      <Input 
-                        type="number"
-                        value={formData.Order}
-                        onChange={(e) => setFormData({...formData, Order: e.target.value})}
-                      />
-                    </div>
-                 </div>
-               </div>
+              {/* Names */}
+              <div className="flex-1 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>
+                      {t("admin.name_en")}{" "}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      required
+                      value={formData.Name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, Name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("admin.name_ar")}</Label>
+                    <Input
+                      className="font-cairo"
+                      value={formData.NameAr}
+                      onChange={(e) =>
+                        setFormData({ ...formData, NameAr: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>{t("admin.group")}</Label>
+                    <Input
+                      type="number"
+                      value={formData.GroupNum}
+                      onChange={(e) =>
+                        setFormData({ ...formData, GroupNum: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t("admin.order")}</Label>
+                    <Input
+                      type="number"
+                      value={formData.Order}
+                      onChange={(e) =>
+                        setFormData({ ...formData, Order: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* 2. Settings */}
             <div className="p-4 bg-gray-50 rounded-lg grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                   <h4 className="text-sm font-semibold text-gray-900">{t('admin.settings')}</h4>
-                   <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="active" 
-                        checked={formData.IsActive} 
-                        onCheckedChange={(c) => setFormData({...formData, IsActive: c})}
-                      />
-                      <Label htmlFor="active">{t('admin.active_status')}</Label>
-                   </div>
-                   <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="menu" 
-                        checked={formData.ShowMenu} 
-                        onCheckedChange={(c) => setFormData({...formData, ShowMenu: c})}
-                      />
-                      <Label htmlFor="menu">{t('admin.show_menu')}</Label>
-                   </div>
-                   <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="coming" 
-                        checked={formData.IsComingSoon} 
-                        onCheckedChange={(c) => setFormData({...formData, IsComingSoon: c})}
-                      />
-                      <Label htmlFor="coming">{t('admin.coming_soon')}</Label>
-                   </div>
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-gray-900">
+                  {t("admin.settings")}
+                </h4>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="active"
+                    checked={formData.IsActive}
+                    onCheckedChange={(c) =>
+                      setFormData({ ...formData, IsActive: c })
+                    }
+                  />
+                  <Label htmlFor="active">{t("admin.active_status")}</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="menu"
+                    checked={formData.ShowMenu}
+                    onCheckedChange={(c) =>
+                      setFormData({ ...formData, ShowMenu: c })
+                    }
+                  />
+                  <Label htmlFor="menu">{t("admin.show_menu")}</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="coming"
+                    checked={formData.IsComingSoon}
+                    onCheckedChange={(c) =>
+                      setFormData({ ...formData, IsComingSoon: c })
+                    }
+                  />
+                  <Label htmlFor="coming">{t("admin.coming_soon")}</Label>
+                </div>
+              </div>
 
-                <div className="space-y-4">
-                   <h4 className="text-sm font-semibold text-gray-900">{t('admin.offers')}</h4>
-                   <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs">{t('admin.max_offers')}</Label>
-                        <Input 
-                          type="number" 
-                          value={formData.MaxOffers} 
-                          onChange={(e) => setFormData({...formData, MaxOffers: e.target.value})}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">{t('admin.max_limited')}</Label>
-                        <Input 
-                          type="number" 
-                          value={formData.MaxLimitedOffers} 
-                          onChange={(e) => setFormData({...formData, MaxLimitedOffers: e.target.value})}
-                        />
-                      </div>
-                   </div>
-                   <div className="space-y-2">
-                      <Label className="text-xs">{t('admin.offer_type')}</Label>
-                      <select 
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        value={formData.personalized_offer_type_id}
-                        onChange={(e) => setFormData({...formData, personalized_offer_type_id: e.target.value})}
-                      >
-                        {offerTypes?.map(type => (
-                          <option key={type.id} value={type.id}>
-                            {isRTL && type.name_ar ? type.name_ar : type.name || type.name_en_ar}
-                          </option>
-                        ))}
-                      </select>
-                   </div>
+              <div className="space-y-4">
+                <h4 className="text-sm font-semibold text-gray-900">
+                  {t("admin.offers")}
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs">{t("admin.max_offers")}</Label>
+                    <Input
+                      type="number"
+                      value={formData.MaxOffers}
+                      onChange={(e) =>
+                        setFormData({ ...formData, MaxOffers: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs">{t("admin.max_limited")}</Label>
+                    <Input
+                      type="number"
+                      value={formData.MaxLimitedOffers}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          MaxLimitedOffers: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">{t("admin.offer_type")}</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={formData.personalized_offer_type_id}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        personalized_offer_type_id: e.target.value,
+                      })
+                    }
+                  >
+                    {offerTypes?.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {isRTL && type.name_ar
+                          ? type.name_ar
+                          : type.name || type.name_en_ar}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
 
             {/* 3. Working Hours */}
             <div className="space-y-2">
-               <Label className="flex items-center gap-2"><Clock size={14}/> {t('admin.working_hours')}</Label>
-               <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Label className="text-xs text-gray-500">{t('admin.from')}</Label>
-                    <Input 
-                      type="time" 
-                      value={formData.WorkingFrom} 
-                      onChange={(e) => setFormData({...formData, WorkingFrom: e.target.value})}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Label className="text-xs text-gray-500">{t('admin.to')}</Label>
-                    <Input 
-                      type="time" 
-                      value={formData.WorkingTo} 
-                      onChange={(e) => setFormData({...formData, WorkingTo: e.target.value})}
-                    />
-                  </div>
-               </div>
+              <Label className="flex items-center gap-2">
+                <Clock size={14} /> {t("admin.working_hours")}
+              </Label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Label className="text-xs text-gray-500">
+                    {t("admin.from")}
+                  </Label>
+                  <Input
+                    type="time"
+                    value={formData.WorkingFrom}
+                    onChange={(e) =>
+                      setFormData({ ...formData, WorkingFrom: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-xs text-gray-500">
+                    {t("admin.to")}
+                  </Label>
+                  <Input
+                    type="time"
+                    value={formData.WorkingTo}
+                    onChange={(e) =>
+                      setFormData({ ...formData, WorkingTo: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-                {t('admin.cancel')}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsModalOpen(false)}
+              >
+                {t("admin.cancel")}
               </Button>
-              <Button type="submit" disabled={isSaving} className="bg-brand-primary">
+              <Button
+                type="submit"
+                disabled={isSaving}
+                className="bg-brand-primary"
+              >
                 {isSaving ? (
                   <>
-                    <Loader className="mr-2 h-4 w-4 animate-spin" /> {t('admin.saving')}
+                    <Loader className="mr-2 h-4 w-4 animate-spin" />{" "}
+                    {t("admin.saving")}
                   </>
                 ) : (
-                  t('admin.save')
+                  t("admin.save")
                 )}
               </Button>
             </DialogFooter>
-
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* --- ASSIGN MODAL --- */}
+      <AssignModal
+        isOpen={!!assignType}
+        onClose={() => setAssignType(null)}
+        title={
+          assignType === "CATEGORY"
+            ? t("admin.assign_categories")
+            : t("admin.assign_governorates")
+        }
+        items={assignType === "CATEGORY" ? categories : governorates}
+        assignedIds={assignType === "CATEGORY" ? currentCatIds : currentGovIds}
+        isLoadingData={assignType === "CATEGORY" ? loadingCats : loadingGovs}
+        isSaving={assignType === "CATEGORY" ? savingCats : savingGovs}
+        onSave={handleSaveAssign}
+      />
     </div>
   );
 };

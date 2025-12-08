@@ -143,6 +143,8 @@ const resources = {
         working_hours: "Working Hours",
         from: "From",
         to: "To",
+        assign_categories: "Assign Categories",
+        assign_governorates: "Assign Governorates",
 
         dashboard_title: "Dashboard",
         dashboard_welcome: "Welcome to your admin overview.",
@@ -448,6 +450,8 @@ const resources = {
         working_hours: "ساعات العمل",
         from: "من",
         to: "إلى",
+        assign_categories: "تعيين التصنيفات",
+        assign_governorates: "تعيين المحافظات",
 
         dashboard_title: "لوحة التحكم",
         dashboard_welcome: "مرحباً بك في لوحة الإدارة.",
