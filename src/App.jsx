@@ -28,6 +28,7 @@ import Suggestions from "./pages/admin/Suggestions";
 import Approvals from "./pages/admin/Approvals";
 import Notifications from "./pages/admin/Notifications";
 import Scans from "./pages/admin/Scans";
+import FeaturedAds from "./pages/admin/FeaturedAds";
 
 import { useDirection } from "./hooks/useDirection";
 
@@ -77,6 +78,7 @@ function App() {
             <Route path="approvals" element={<Approvals />} />
             <Route path="notifications" element={<Notifications />} />
             <Route path="scans" element={<Scans />} />
+            <Route path="featured-ads" element={<FeaturedAds />} />
           </Route>
         </Routes>
       </BrowserRouter>

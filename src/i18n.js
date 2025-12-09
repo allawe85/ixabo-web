@@ -239,6 +239,9 @@ const resources = {
         name: "Name",
         email: "Email",
         role_label: "Role",
+        change_role: "Change Role",
+        select_role: "Select New Role",
+        role_label: "Role",
 
         packages_title: "Packages",
         packages_subtitle: "Manage subscription packages and pricing.",
@@ -289,6 +292,8 @@ const resources = {
         group_name: "Group Name",
         net_price: "Net Price",
         usage: "Usage",
+        view_codes: "View Codes",
+        count: "Count",
 
         memes_title: "Intro Memes",
         memes_subtitle: "Manage splash screen marketing images.",
@@ -325,6 +330,10 @@ const resources = {
         offer: "Offer",
         date: "Date",
 
+        featured_ads_title: "Featured Ads",
+        featured_ads_subtitle: "Manage banners shown on the app home screen.",
+        add_ad: "Add Ad",
+
         menu: {
           dashboard: "Dashboard",
           providers: "Providers",
@@ -342,6 +351,7 @@ const resources = {
           intro_memes: "Intro Memes",
           approvals: "Approvals",
           suggestions: "Suggestions & Complaints",
+          featured: "Featured Ads",
         }
       }
     }
@@ -578,6 +588,9 @@ const resources = {
         name: "الاسم",
         email: "البريد الإلكتروني",
         role_label: "الصلاحية",
+        change_role: "تغيير الصلاحية",
+        select_role: "اختر الصلاحية الجديدة",
+        role_label: "الصلاحية",
 
         packages_title: "الباقات",
         packages_subtitle: "إدارة باقات الاشتراك والأسعار.",
@@ -628,6 +641,8 @@ const resources = {
         group_name: "اسم المجموعة",
         net_price: "السعر الصافي",
         usage: "الاستخدام",
+        view_codes: "عرض الأكواد",
+        count: "العدد",
 
         memes_title: "شاشات الترحيب",
         memes_subtitle: "إدارة صور الإعلانات في بداية التطبيق.",
@@ -664,6 +679,10 @@ const resources = {
         offer: "العرض",
         date: "التاريخ",
 
+        featured_ads_title: "إعلانات مميزة",
+        featured_ads_subtitle: "إدارة البانرات المعروضة على الشاشة الرئيسية للتطبيق.",
+        add_ad: "إضافة إعلان",
+
         menu: {
           dashboard: "لوحة التحكم",
           providers: "الشركاء",
@@ -681,6 +700,7 @@ const resources = {
           intro_memes: "شاشات الترحيب",
           approvals: "الموافقات",
           suggestions: "الاقتراحات والشكاوى",
+          featured: "إعلانات مميزة",
         }
       }
     }

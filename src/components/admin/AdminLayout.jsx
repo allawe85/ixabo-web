@@ -17,9 +17,11 @@ import {
   Package,
   Tags,
   ChevronDown,
-  Image,          // New Icon
-  CheckSquare,    // New Icon
-  MessageSquare   // New Icon
+  Image,
+  CheckSquare,
+  MessageSquare,
+  Briefcase, // NEW: For Management
+  Megaphone  // NEW: For Featured Ads
 } from 'lucide-react';
 import { IMAGES } from '../../constants';
 
@@ -29,7 +31,7 @@ const AdminLayout = () => {
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [expandedMenus, setExpandedMenus] = useState({
-    'System Parameters': true, // Optional: Keep these open by default if you want
+    'System Parameters': true, 
     'Management': true
   });
 
@@ -52,7 +54,6 @@ const AdminLayout = () => {
     i18n.changeLanguage(newLang);
   };
 
-  // --- UPDATED MENU STRUCTURE ---
   const MENU_ITEMS = [
     { label: t('admin.menu.dashboard'), path: '/portal/dashboard', icon: LayoutDashboard },
     { label: t('admin.menu.providers'), path: '/portal/providers', icon: Store },
@@ -67,13 +68,15 @@ const AdminLayout = () => {
         { label: t('admin.menu.sales_points'), path: '/portal/sales-points', icon: Store },
         { label: t('admin.menu.packages'), path: '/portal/packages', icon: Package },
         { label: t('admin.menu.intro_memes'), path: '/portal/intro-memes', icon: Image },
+        // NEW: Featured Ads added here
+        { label: t('admin.menu.featured'), path: '/portal/featured-ads', icon: Megaphone },
       ]
     },
 
     // 2. Management Group
     { 
       label: t('admin.menu.management'), 
-      icon: Users,
+      icon: Briefcase, // CHANGED: From Users to Briefcase
       submenu: [
         { label: t('admin.menu.users'), path: '/portal/users', icon: Users },
         { label: t('admin.menu.subscriptions'), path: '/portal/subscriptions', icon: CreditCard },
@@ -156,7 +159,6 @@ const AdminLayout = () => {
                             ${isActive(sub.path) ? 'text-brand-primary font-semibold bg-brand-primary/5' : 'text-gray-500 hover:text-gray-900'}
                           `}
                         >
-                           {/* Keep sub icons optional, good for scanning long lists */}
                            <sub.icon size={16} className="opacity-70" />
                            <span>{sub.label}</span>
                         </Link>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useUsers, useDeleteUser } from "../../hooks/useUsers";
+import { useUsers, useDeleteUser, useUpdateUserRole } from "../../hooks/useUsers";
 import {
   Table,
   TableBody,
@@ -19,6 +19,14 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { 
   MoreHorizontal, 
   Search, 
@@ -26,16 +34,54 @@ import {
   Trash2, 
   User,
   Mail,
-  Phone
+  Phone,
+  Shield // Icon for Role
 } from "lucide-react";
 
 const Users = () => {
   const { t, i18n } = useTranslation();
   const { users, isLoading, error } = useUsers();
   const { mutate: deleteUser } = useDeleteUser();
+  const { mutate: updateRole, isPending: isUpdating } = useUpdateUserRole();
+  
   const [search, setSearch] = useState("");
+  
+  // State for Role Modal
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newRole, setNewRole] = useState("");
 
   const isRTL = i18n.dir() === 'rtl';
+
+  // --- HANDLERS ---
+
+  const handleOpenRoleModal = (user) => {
+    setSelectedUser(user);
+    setNewRole(user.Role); // Pre-select current role
+    setRoleModalOpen(true);
+  };
+
+  const handleSaveRole = () => {
+    if (!selectedUser || !newRole) return;
+    updateRole({ id: selectedUser.ID, role: newRole }, {
+      onSuccess: () => setRoleModalOpen(false)
+    });
+  };
+
+  // --- RENDER HELPERS ---
+
+  const RoleBadge = ({ role }) => {
+    let styles = "bg-gray-100 text-gray-600";
+    if (role === 'PROVIDER') styles = "bg-blue-50 text-blue-700 border-blue-100";
+    if (role === 'ADMIN') styles = "bg-purple-50 text-purple-700 border-purple-100";
+    if (role === 'SUBPROVIDER') styles = "bg-cyan-50 text-cyan-700 border-cyan-100";
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${styles}`}>
+        {role}
+      </span>
+    );
+  };
 
   if (isLoading) return (
     <div className="flex items-center justify-center h-96">
@@ -51,21 +97,6 @@ const Users = () => {
     u.PhoneNumber?.includes(search)
   );
 
-  // Helper for Role Badges
-  const RoleBadge = ({ role }) => {
-    let styles = "bg-gray-100 text-gray-600"; // Default (USER)
-    
-    if (role === 'PROVIDER') styles = "bg-blue-50 text-blue-700 border-blue-100";
-    if (role === 'ADMIN') styles = "bg-purple-50 text-purple-700 border-purple-100";
-    if (role === 'SUBPROVIDER') styles = "bg-cyan-50 text-cyan-700 border-cyan-100";
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${styles}`}>
-        {role}
-      </span>
-    );
-  };
-
   const ActionMenu = ({ user }) => (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -75,6 +106,12 @@ const Users = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? "start" : "end"}>
         <DropdownMenuLabel>{t('admin.actions')}</DropdownMenuLabel>
+        
+        {/* Change Role Option */}
+        <DropdownMenuItem onClick={() => handleOpenRoleModal(user)}>
+          <Shield className="mr-2 h-4 w-4" /> {t('admin.change_role')}
+        </DropdownMenuItem>
+
         <DropdownMenuItem 
           className="text-red-600 focus:text-red-600 focus:bg-red-50"
           onClick={() => {
@@ -95,7 +132,6 @@ const Users = () => {
           <h1 className="text-2xl font-bold text-gray-900">{t('admin.users_title')}</h1>
           <p className="text-sm text-gray-500">{t('admin.users_subtitle')}</p>
         </div>
-        {/* We generally don't "Add" users manually here, they sign up via app, but button placeholdered if needed */}
       </div>
 
       {/* Filters */}
@@ -196,6 +232,41 @@ const Users = () => {
           </div>
         )}
       </div>
+
+      {/* --- CHANGE ROLE MODAL --- */}
+      <Dialog open={roleModalOpen} onOpenChange={setRoleModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{t('admin.change_role')}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+             <div className="space-y-2">
+                <Label>{t('admin.select_role')}</Label>
+                <div className="flex flex-col gap-2">
+                   {['USER', 'PROVIDER', 'ADMIN', 'SUBPROVIDER'].map((role) => (
+                     <div 
+                       key={role}
+                       className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-colors ${newRole === role ? 'border-brand-primary bg-brand-primary/5' : 'hover:bg-gray-50'}`}
+                       onClick={() => setNewRole(role)}
+                     >
+                        <span className="font-medium text-sm">{role}</span>
+                        {newRole === role && <div className="h-2 w-2 rounded-full bg-brand-primary"></div>}
+                     </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRoleModalOpen(false)}>{t('admin.cancel')}</Button>
+            <Button onClick={handleSaveRole} disabled={isUpdating} className="bg-brand-primary">
+              {isUpdating ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : t('admin.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };

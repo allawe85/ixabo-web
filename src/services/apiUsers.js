@@ -2,21 +2,29 @@ import { supabase } from "../lib/supabase";
 
 /**
  * Fetches all users.
- * @returns {Promise<Array>}
  */
 export async function getUsers() {
   const { data, error } = await supabase
     .from("user_info")
     .select("*")
-    .order("ID", { ascending: false }); // Newest users first
+    .order("ID", { ascending: false });
 
   if (error) throw new Error(error.message);
   return data;
 }
 
-// Note: Usually we don't hard-delete users easily because of foreign keys (orders, scans, etc.),
-// but I'll add the function just in case you need it.
 export async function deleteUser(id) {
   const { error } = await supabase.from("user_info").delete().eq("ID", id);
+  if (error) throw new Error(error.message);
+}
+
+// --- NEW FUNCTION ---
+
+export async function updateUserRole({ id, role }) {
+  const { error } = await supabase
+    .from("user_info")
+    .update({ Role: role })
+    .eq("ID", id);
+
   if (error) throw new Error(error.message);
 }
