@@ -334,6 +334,16 @@ const resources = {
         featured_ads_subtitle: "Manage banners shown on the app home screen.",
         add_ad: "Add Ad",
 
+        pending_offers_title: "Pending Offers",
+        pending_offers_subtitle: "Approve or reject new provider offers.",
+        confirm_approve: "Are you sure you want to approve this offer?",
+        confirm_reject: "Are you sure you want to reject (delete) this offer?",
+        approve: "Approve",
+        reject: "Reject",
+        valid_to: "Valid To",
+
+        pending_offers: "Pending Offers",
+
         menu: {
           dashboard: "Dashboard",
           providers: "Providers",
@@ -352,6 +362,7 @@ const resources = {
           approvals: "Approvals",
           suggestions: "Suggestions & Complaints",
           featured: "Featured Ads",
+        pending_offers: "Pending Offers",
         }
       }
     }
@@ -683,6 +694,16 @@ const resources = {
         featured_ads_subtitle: "إدارة البانرات المعروضة على الشاشة الرئيسية للتطبيق.",
         add_ad: "إضافة إعلان",
 
+        pending_offers_title: "العروض المعلقة",
+        pending_offers_subtitle: "الموافقة أو الرفض لعروض الشركاء الجديدة.",
+        confirm_approve: "هل أنت متأكد من الموافقة على هذا العرض؟",
+        confirm_reject: "هل أنت متأكد من رفض (حذف) هذا العرض؟",
+        approve: "قبول",
+        reject: "رفض",
+        valid_to: "صالح حتى",
+
+        pending_offers: "العروض المعلقة",
+
         menu: {
           dashboard: "لوحة التحكم",
           providers: "الشركاء",
@@ -701,6 +722,7 @@ const resources = {
           approvals: "الموافقات",
           suggestions: "الاقتراحات والشكاوى",
           featured: "إعلانات مميزة",
+          pending_offers: "العروض المعلقة",
         }
       }
     }

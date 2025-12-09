@@ -20,8 +20,9 @@ import {
   Image,
   CheckSquare,
   MessageSquare,
-  Briefcase, // NEW: For Management
-  Megaphone  // NEW: For Featured Ads
+  Tag,
+  Briefcase, 
+  Megaphone  
 } from 'lucide-react';
 import { IMAGES } from '../../constants';
 
@@ -68,7 +69,6 @@ const AdminLayout = () => {
         { label: t('admin.menu.sales_points'), path: '/portal/sales-points', icon: Store },
         { label: t('admin.menu.packages'), path: '/portal/packages', icon: Package },
         { label: t('admin.menu.intro_memes'), path: '/portal/intro-memes', icon: Image },
-        // NEW: Featured Ads added here
         { label: t('admin.menu.featured'), path: '/portal/featured-ads', icon: Megaphone },
       ]
     },
@@ -82,6 +82,7 @@ const AdminLayout = () => {
         { label: t('admin.menu.subscriptions'), path: '/portal/subscriptions', icon: CreditCard },
         { label: t('admin.menu.codes'), path: '/portal/codes', icon: Tags },
         { label: t('admin.menu.approvals'), path: '/portal/approvals', icon: CheckSquare },
+        { label: t('admin.menu.pending_offers'), path: '/portal/pending-offers', icon: Tag },
         { label: t('admin.menu.suggestions'), path: '/portal/suggestions', icon: MessageSquare },
       ]
     },
