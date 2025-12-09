@@ -66,7 +66,6 @@ const AdminLayout = () => {
         { label: t('admin.menu.governorates'), path: '/portal/governorates', icon: MapPin },
         { label: t('admin.menu.sales_points'), path: '/portal/sales-points', icon: Store },
         { label: t('admin.menu.packages'), path: '/portal/packages', icon: Package },
-        // NEW: Intro Memes moved here
         { label: t('admin.menu.intro_memes'), path: '/portal/intro-memes', icon: Image },
       ]
     },
@@ -79,9 +78,7 @@ const AdminLayout = () => {
         { label: t('admin.menu.users'), path: '/portal/users', icon: Users },
         { label: t('admin.menu.subscriptions'), path: '/portal/subscriptions', icon: CreditCard },
         { label: t('admin.menu.codes'), path: '/portal/codes', icon: Tags },
-        // NEW: Approvals moved here
         { label: t('admin.menu.approvals'), path: '/portal/approvals', icon: CheckSquare },
-        // NEW: Suggestions moved here
         { label: t('admin.menu.suggestions'), path: '/portal/suggestions', icon: MessageSquare },
       ]
     },

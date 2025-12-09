@@ -1,78 +1,101 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { usePackageGroups, useDiscountCodes, useDeletePackageGroup, useDeleteDiscountCode } from "../../hooks/useCodes";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { 
-  MoreHorizontal, 
-  Plus, 
-  Search, 
-  Loader, 
-  Trash2, 
-  Pencil, 
-  Tags, 
-  CreditCard,
-  CalendarClock,
-  Percent
+  Search, Loader, Plus, MoreHorizontal, 
+  Trash2, Tags, Ticket, Calendar, Copy 
 } from "lucide-react";
+import { toast } from "sonner";
+
+// --- HOOKS IMPORT ---
+import { useCodeGroups, useDeleteCodeGroup } from "../../hooks/useCodes"; // Existing hook
+import { useDiscountCodes, useCreateDiscountCode, useDeleteDiscountCode } from "../../hooks/useDiscountCodes"; // New hook
 
 const Codes = () => {
   const { t, i18n } = useTranslation();
-  const [search, setSearch] = useState("");
   const isRTL = i18n.dir() === 'rtl';
+  const [activeTab, setActiveTab] = useState("subscription"); // 'subscription' or 'discount'
+  const [search, setSearch] = useState("");
 
-  // Hooks
-  const { groups, isLoading: loadingGroups } = usePackageGroups();
-  const { discounts, isLoading: loadingDiscounts } = useDiscountCodes();
-  const { mutate: deleteGroup } = useDeletePackageGroup();
-  const { mutate: deleteDiscount } = useDeleteDiscountCode();
+  // --- DATA FETCHING ---
+  const { codeGroups, isLoading: loadingGroups } = useCodeGroups();
+  const { codes: discountCodes, isLoading: loadingDiscounts } = useDiscountCodes();
 
-  // -- SUB-COMPONENTS --
+  // --- MUTATIONS ---
+  const deleteGroup = useDeleteCodeGroup();
+  const createDiscount = useCreateDiscountCode();
+  const deleteDiscount = useDeleteDiscountCode();
 
-  const ActionMenu = ({ onEdit, onDelete, type }) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
-          <MoreHorizontal className="h-4 w-4 text-gray-500" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align={isRTL ? "start" : "end"}>
-        <DropdownMenuLabel>{t('admin.actions')}</DropdownMenuLabel>
-        <DropdownMenuItem onClick={onEdit}>
-          <Pencil className="mr-2 h-4 w-4" /> {t('admin.edit')}
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          className="text-red-600 focus:text-red-600 focus:bg-red-50"
-          onClick={() => {
-            if(confirm(t('admin.delete_confirm'))) onDelete();
-          }}
-        >
-          <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+  // --- MODAL STATE ---
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [discountForm, setDiscountForm] = useState({
+    code: "", gold_price: "", gold_price_dollar: "",
+    silver_price: "", silver_price_dollar: "", expiry: ""
+  });
+
+  // --- HANDLERS ---
+
+  const handleCreateDiscount = () => {
+    if (!discountForm.code || !discountForm.expiry) {
+      toast.warning(t('admin.fill_required_fields'));
+      return;
+    }
+    createDiscount.mutate({
+      code: discountForm.code,
+      gold_price: parseFloat(discountForm.gold_price) || 0,
+      gold_price_dollar: parseFloat(discountForm.gold_price_dollar) || 0,
+      silver_price: parseFloat(discountForm.silver_price) || 0,
+      silver_price_dollar: parseFloat(discountForm.silver_price_dollar) || 0,
+      expiry: discountForm.expiry,
+      usage: 0
+    }, {
+      onSuccess: () => setIsDiscountModalOpen(false)
+    });
+  };
+
+  const openDiscountModal = () => {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    setDiscountForm({
+      code: "", gold_price: "", gold_price_dollar: "",
+      silver_price: "", silver_price_dollar: "", 
+      expiry: nextMonth.toISOString().split('T')[0]
+    });
+    setIsDiscountModalOpen(true);
+  };
+
+  // Helper: Calculate usage percentage for subscription groups
+  const getUsagePercent = (used, total) => {
+    if (!total) return 0;
+    return Math.round((used / total) * 100);
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "-";
+    return new Date(dateStr).toLocaleDateString(i18n.language);
+  };
+
+  const isExpired = (dateStr) => new Date(dateStr) < new Date();
+
+  // --- RENDER ---
+
+  if (loadingGroups || loadingDiscounts) return (
+    <div className="flex justify-center h-96 items-center"><Loader className="animate-spin text-brand-primary" size={32} /></div>
   );
 
-  // Filter Logic
-  const filteredGroups = groups?.filter(g => g.Name?.toLowerCase().includes(search.toLowerCase()));
-  const filteredDiscounts = discounts?.filter(d => d.code?.toLowerCase().includes(search.toLowerCase()));
+  const filteredGroups = codeGroups?.filter(g => g.Name?.toLowerCase().includes(search.toLowerCase()));
+  const filteredDiscounts = discountCodes?.filter(c => c.code?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="space-y-6">
@@ -82,188 +105,182 @@ const Codes = () => {
           <h1 className="text-2xl font-bold text-gray-900">{t('admin.codes_title')}</h1>
           <p className="text-sm text-gray-500">{t('admin.codes_subtitle')}</p>
         </div>
-        {/* Add Button (Context sensitive? For now generic placement) */}
+        
+        {/* Action Button Changes Based on Tab */}
+        {activeTab === 'subscription' ? (
+          <Button className="bg-brand-primary" onClick={() => console.log("Open Group Modal")}>
+            <Plus className="mr-2 h-4 w-4" /> {t('admin.add_group')}
+          </Button>
+        ) : (
+          <Button className="bg-brand-primary" onClick={openDiscountModal}>
+            <Plus className="mr-2 h-4 w-4" /> {t('admin.add_discount')}
+          </Button>
+        )}
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="groups" className="w-full">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
-            <TabsTrigger value="groups">{t('admin.tab_groups')}</TabsTrigger>
-            <TabsTrigger value="discounts">{t('admin.tab_discounts')}</TabsTrigger>
+      {/* TABS & SEARCH */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full sm:w-auto">
+          <TabsList>
+            <TabsTrigger value="subscription">{t('admin.subscription_codes')}</TabsTrigger>
+            <TabsTrigger value="discount">{t('admin.discount_codes')}</TabsTrigger>
           </TabsList>
+        </Tabs>
 
-          {/* Filter (Shared) */}
-          <div className="flex items-center gap-2 w-full sm:max-w-xs relative">
-            <Search className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} size={18} />
-            <Input 
-              placeholder={t('admin.search_placeholder')} 
-              className={isRTL ? 'pr-10' : 'pl-10'}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+        <div className="relative w-full sm:max-w-xs">
+          <Search className={`absolute top-2.5 text-gray-400 ${isRTL ? 'right-3' : 'left-3'}`} size={18} />
+          <Input 
+            placeholder={t('admin.search_placeholder')} 
+            className={isRTL ? 'pr-10' : 'pl-10'}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
+      </div>
 
-        {/* --- TAB 1: SUBSCRIPTION GROUPS --- */}
-        <TabsContent value="groups" className="space-y-4">
-          <div className="flex justify-end">
-             <Button className="bg-brand-primary hover:bg-brand-secondary">
-                <Plus className="mr-2 h-4 w-4" /> {t('admin.add_group')}
-             </Button>
-          </div>
-
-          {loadingGroups ? (
-            <div className="h-48 flex items-center justify-center"><Loader className="animate-spin" /></div>
-          ) : (
-            <>
-              {/* Desktop Table */}
-              <div className="hidden md:block border rounded-xl bg-white shadow-sm overflow-hidden">
-                <Table dir={isRTL ? "rtl" : "ltr"}>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50/50">
-                      <TableHead className="text-start">{t('admin.group_name')}</TableHead>
-                      <TableHead className="text-start">{t('admin.package')}</TableHead>
-                      <TableHead className="text-center">{t('admin.usage')}</TableHead>
-                      <TableHead className="text-start">{t('admin.net_price')}</TableHead>
-                      <TableHead className="text-end">{t('admin.actions')}</TableHead>
+      {/* --- TAB CONTENT 1: SUBSCRIPTION GROUPS --- */}
+      {activeTab === 'subscription' && (
+        <div className="border rounded-xl bg-white shadow-sm overflow-hidden">
+          <Table dir={isRTL ? "rtl" : "ltr"}>
+            <TableHeader>
+              <TableRow className="bg-gray-50/50">
+                <TableHead className="text-start">{t('admin.group_name')}</TableHead>
+                <TableHead className="text-start">{t('admin.package')}</TableHead>
+                <TableHead className="text-start">{t('admin.net_price')}</TableHead>
+                <TableHead className="text-start">{t('admin.usage')}</TableHead>
+                <TableHead className="text-end">{t('admin.actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredGroups?.length > 0 ? (
+                filteredGroups.map((group) => {
+                  const percent = getUsagePercent(group.IsUsedCount, group.CodeCount);
+                  return (
+                    <TableRow key={group.id}>
+                      <TableCell className="font-medium">{group.Name}</TableCell>
+                      <TableCell><span className="bg-purple-50 text-purple-700 px-2 py-1 rounded text-xs font-bold">{isRTL ? group.TitleAr : group.Title}</span></TableCell>
+                      <TableCell>{group.NetPrice} JOD</TableCell>
+                      <TableCell>
+                        <div className="w-[120px]">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-gray-500">{group.IsUsedCount}/{group.CodeCount}</span>
+                            <span className="font-bold text-brand-primary">{percent}%</span>
+                          </div>
+                          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-brand-primary" style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-end">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal size={16}/></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="text-red-600" onClick={() => { if(confirm(t('admin.confirm_delete_generic'))) deleteGroup.mutate(group.id); }}>
+                              <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredGroups?.map((g) => (
-                      <TableRow key={g.id}>
-                        <TableCell className="font-medium text-start">{g.Name}</TableCell>
-                        <TableCell className="text-start">
-                          {isRTL ? g.TitleAr : g.Title}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <span className={`px-2 py-1 rounded-full text-xs font-bold ${g.IsUsedCount >= g.CodeCount ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                            {g.IsUsedCount || 0} / {g.CodeCount}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-start">{g.NetPrice} JOD</TableCell>
-                        <TableCell className="text-end">
-                          <ActionMenu 
-                            onEdit={() => console.log('Edit', g.id)} 
-                            onDelete={() => deleteGroup(g.id)} 
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                  );
+                })
+              ) : (
+                <TableRow><TableCell colSpan={5} className="h-24 text-center text-gray-500">{t('admin.no_results')}</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-              {/* Mobile Cards */}
-              <div className="md:hidden grid gap-4">
-                {filteredGroups?.map((g) => (
-                  <Card key={g.id}>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-bold">{g.Name}</h3>
-                        <ActionMenu 
-                            onEdit={() => console.log('Edit', g.id)} 
-                            onDelete={() => deleteGroup(g.id)} 
-                        />
+      {/* --- TAB CONTENT 2: DISCOUNT CODES --- */}
+      {activeTab === 'discount' && (
+        <div className="border rounded-xl bg-white shadow-sm overflow-hidden">
+          <Table dir={isRTL ? "rtl" : "ltr"}>
+            <TableHeader>
+              <TableRow className="bg-gray-50/50">
+                <TableHead className="text-start">{t('admin.code')}</TableHead>
+                <TableHead className="text-start">Gold (JOD/USD)</TableHead>
+                <TableHead className="text-start">Silver (JOD/USD)</TableHead>
+                <TableHead className="text-start">{t('admin.expiry')}</TableHead>
+                <TableHead className="text-start">{t('admin.usage')}</TableHead>
+                <TableHead className="text-end">{t('admin.actions')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredDiscounts?.length > 0 ? (
+                filteredDiscounts.map((c) => (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Ticket size={16} className="text-orange-500" />
+                        <span className="font-bold text-gray-900">{c.code}</span>
                       </div>
-                      <div className="flex justify-between text-sm text-gray-500">
-                         <span>{isRTL ? g.TitleAr : g.Title}</span>
-                         <span className="font-mono text-brand-primary font-bold">{g.NetPrice} JOD</span>
-                      </div>
-                      <div className="text-xs bg-gray-50 p-2 rounded flex justify-between">
-                         <span>{t('admin.usage')}:</span>
-                         <span className="font-bold">{g.IsUsedCount || 0} / {g.CodeCount}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </TabsContent>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">{c.gold_price} / {c.gold_price_dollar}</TableCell>
+                    <TableCell className="font-mono text-xs">{c.silver_price} / {c.silver_price_dollar}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded ${isExpired(c.expiry) ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                         <Calendar size={12}/> {formatDate(c.expiry)}
+                         {isExpired(c.expiry) && <span>(Exp)</span>}
+                      </span>
+                    </TableCell>
+                    <TableCell>{c.usage}</TableCell>
+                    <TableCell className="text-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal size={16}/></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem className="text-red-600" onClick={() => { if(confirm(t('admin.confirm_delete_generic'))) deleteDiscount.mutate(c.id); }}>
+                            <Trash2 className="mr-2 h-4 w-4" /> {t('admin.delete')}
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={6} className="h-24 text-center text-gray-500">{t('admin.no_results')}</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-        {/* --- TAB 2: DISCOUNT CODES --- */}
-        <TabsContent value="discounts" className="space-y-4">
-          <div className="flex justify-end">
-             <Button className="bg-brand-primary hover:bg-brand-secondary">
-                <Plus className="mr-2 h-4 w-4" /> {t('admin.add_discount')}
-             </Button>
+      {/* --- ADD DISCOUNT MODAL --- */}
+      <Dialog open={isDiscountModalOpen} onOpenChange={setIsDiscountModalOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader><DialogTitle>{t('admin.add_discount')}</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>{t('admin.code')} <span className="text-red-500">*</span></Label>
+              <Input placeholder="e.g. SALE2024" value={discountForm.code} onChange={e => setDiscountForm({...discountForm, code: e.target.value.toUpperCase()})} />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+               <div className="col-span-2 text-xs font-bold text-yellow-700 uppercase">Gold Price</div>
+               <div className="space-y-1"><Label className="text-xs">JOD</Label><Input type="number" value={discountForm.gold_price} onChange={e => setDiscountForm({...discountForm, gold_price: e.target.value})} /></div>
+               <div className="space-y-1"><Label className="text-xs">USD</Label><Input type="number" value={discountForm.gold_price_dollar} onChange={e => setDiscountForm({...discountForm, gold_price_dollar: e.target.value})} /></div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-3 rounded-lg border border-gray-100">
+               <div className="col-span-2 text-xs font-bold text-gray-500 uppercase">Silver Price</div>
+               <div className="space-y-1"><Label className="text-xs">JOD</Label><Input type="number" value={discountForm.silver_price} onChange={e => setDiscountForm({...discountForm, silver_price: e.target.value})} /></div>
+               <div className="space-y-1"><Label className="text-xs">USD</Label><Input type="number" value={discountForm.silver_price_dollar} onChange={e => setDiscountForm({...discountForm, silver_price_dollar: e.target.value})} /></div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('admin.expiry')}</Label>
+              <Input type="date" value={discountForm.expiry} onChange={e => setDiscountForm({...discountForm, expiry: e.target.value})} />
+            </div>
           </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDiscountModalOpen(false)}>{t('admin.cancel')}</Button>
+            <Button onClick={handleCreateDiscount} disabled={createDiscount.isPending} className="bg-brand-primary">
+              {createDiscount.isPending ? <Loader className="animate-spin" /> : t('admin.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-          {loadingDiscounts ? (
-            <div className="h-48 flex items-center justify-center"><Loader className="animate-spin" /></div>
-          ) : (
-            <>
-              {/* Desktop Table */}
-              <div className="hidden md:block border rounded-xl bg-white shadow-sm overflow-hidden">
-                <Table dir={isRTL ? "rtl" : "ltr"}>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50/50">
-                      <TableHead className="text-start">{t('admin.code')}</TableHead>
-                      <TableHead className="text-start">{t('admin.expiry')}</TableHead>
-                      <TableHead className="text-start">{t('admin.gold_price')}</TableHead>
-                      <TableHead className="text-start">{t('admin.silver_price')}</TableHead>
-                      <TableHead className="text-center">{t('admin.usage_count')}</TableHead>
-                      <TableHead className="text-end">{t('admin.actions')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredDiscounts?.map((d) => (
-                      <TableRow key={d.id}>
-                        <TableCell className="font-mono font-bold text-brand-primary text-start">{d.code}</TableCell>
-                        <TableCell className="text-start">
-                          {new Date(d.expiry).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="text-start">{d.gold_price} JOD</TableCell>
-                        <TableCell className="text-start">{d.silver_price} JOD</TableCell>
-                        <TableCell className="text-center">{d.usage}</TableCell>
-                        <TableCell className="text-end">
-                          <ActionMenu 
-                            onEdit={() => console.log('Edit', d.id)} 
-                            onDelete={() => deleteDiscount(d.id)} 
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Cards */}
-              <div className="md:hidden grid gap-4">
-                {filteredDiscounts?.map((d) => (
-                  <Card key={d.id}>
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex justify-between items-center">
-                         <div className="flex items-center gap-2">
-                           <Tags size={16} className="text-brand-primary"/>
-                           <span className="font-mono font-bold text-lg">{d.code}</span>
-                         </div>
-                         <ActionMenu 
-                            onEdit={() => console.log('Edit', d.id)} 
-                            onDelete={() => deleteDiscount(d.id)} 
-                         />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                         <div className="bg-yellow-50 p-2 rounded text-yellow-700">
-                            Gold: <b>{d.gold_price}</b>
-                         </div>
-                         <div className="bg-gray-100 p-2 rounded text-gray-700">
-                            Silver: <b>{d.silver_price}</b>
-                         </div>
-                      </div>
-                      <div className="flex justify-between items-center text-xs text-gray-500 border-t pt-2">
-                        <span className="flex items-center gap-1"><CalendarClock size={14}/> {new Date(d.expiry).toLocaleDateString()}</span>
-                        <span>Used: {d.usage}</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
     </div>
   );
 };
