@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import { 
   LayoutDashboard, 
   Store, 
@@ -20,7 +21,6 @@ import {
   Image,
   CheckSquare,
   MessageSquare,
-  Tag,
   Briefcase, 
   Megaphone  
 } from 'lucide-react';
@@ -29,7 +29,9 @@ import { IMAGES } from '../../constants';
 const AdminLayout = () => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
-  
+  const navigate = useNavigate();
+  const { user, logout } = useAuth(); // Get user info
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 768);
   const [expandedMenus, setExpandedMenus] = useState({
     'System Parameters': true, 
@@ -55,41 +57,75 @@ const AdminLayout = () => {
     i18n.changeLanguage(newLang);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  // --- MENU CONFIGURATION ---
+  // allowedRoles: Define who can see each item
   const MENU_ITEMS = [
-    { label: t('admin.menu.dashboard'), path: '/portal/dashboard', icon: LayoutDashboard },
-    { label: t('admin.menu.providers'), path: '/portal/providers', icon: Store },
+    { 
+      label: t('admin.menu.dashboard'), 
+      path: '/portal/dashboard', 
+      icon: LayoutDashboard,
+      allowedRoles: ['ADMIN', 'PROVIDER', 'SUBPROVIDER'] 
+    },
+    { 
+      label: t('admin.menu.providers'), 
+      path: '/portal/providers', 
+      icon: Store,
+      allowedRoles: ['ADMIN', 'PROVIDER', 'SUBPROVIDER']
+    },
     
-    // 1. System Parameters Group
+    // 1. System Parameters (Admin Only)
     { 
       label: t('admin.menu.system_params'), 
       icon: Settings,
+      allowedRoles: ['ADMIN'],
       submenu: [
         { label: t('admin.menu.categories'), path: '/portal/categories', icon: Grid },
         { label: t('admin.menu.governorates'), path: '/portal/governorates', icon: MapPin },
         { label: t('admin.menu.sales_points'), path: '/portal/sales-points', icon: Store },
         { label: t('admin.menu.packages'), path: '/portal/packages', icon: Package },
         { label: t('admin.menu.intro_memes'), path: '/portal/intro-memes', icon: Image },
-        { label: t('admin.menu.featured'), path: '/portal/featured-ads', icon: Megaphone },
+        { label: t('admin.menu.featured'), path: '/portal/featured', icon: Megaphone },
       ]
     },
 
-    // 2. Management Group
+    // 2. Management (Admin Only)
     { 
       label: t('admin.menu.management'), 
-      icon: Briefcase, // CHANGED: From Users to Briefcase
+      icon: Briefcase, 
+      allowedRoles: ['ADMIN'],
       submenu: [
         { label: t('admin.menu.users'), path: '/portal/users', icon: Users },
         { label: t('admin.menu.subscriptions'), path: '/portal/subscriptions', icon: CreditCard },
         { label: t('admin.menu.codes'), path: '/portal/codes', icon: Tags },
         { label: t('admin.menu.approvals'), path: '/portal/approvals', icon: CheckSquare },
-        { label: t('admin.menu.pending_offers'), path: '/portal/pending-offers', icon: Tag },
         { label: t('admin.menu.suggestions'), path: '/portal/suggestions', icon: MessageSquare },
       ]
     },
 
-    { label: t('admin.menu.scans'), path: '/portal/scans', icon: QrCode },
-    { label: t('admin.menu.notifications'), path: '/portal/notifications', icon: Bell },
+    // Scans & Notifications (Admin Only)
+    { 
+      label: t('admin.menu.scans'), 
+      path: '/portal/scans', 
+      icon: QrCode,
+      allowedRoles: ['ADMIN']
+    },
+    { 
+      label: t('admin.menu.notifications'), 
+      path: '/portal/notifications', 
+      icon: Bell,
+      allowedRoles: ['ADMIN']
+    },
   ];
+
+  // --- FILTER MENU BASED ON ROLE ---
+  const filteredMenu = MENU_ITEMS.filter(item => 
+    item.allowedRoles.includes(user?.Role)
+  );
 
   const isActive = (path) => location.pathname === path;
   const isRTL = i18n.dir() === 'rtl';
@@ -123,7 +159,7 @@ const AdminLayout = () => {
 
         {/* Menu Items */}
         <div className="flex-1 overflow-y-auto py-4 space-y-1">
-          {MENU_ITEMS.map((item) => (
+          {filteredMenu.map((item) => (
             <div key={item.label}>
               {item.submenu ? (
                 // --- PARENT MENU ---
@@ -189,7 +225,10 @@ const AdminLayout = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-100">
-          <button className={`flex items-center gap-3 text-red-500 hover:bg-red-50 w-full p-2 rounded-lg transition-colors ${!isSidebarOpen && 'justify-center'}`}>
+          <button 
+            onClick={handleLogout}
+            className={`flex items-center gap-3 text-red-500 hover:bg-red-50 w-full p-2 rounded-lg transition-colors ${!isSidebarOpen && 'justify-center'}`}
+          >
             <LogOut size={20} />
             {isSidebarOpen && <span className="font-medium text-sm">{t('admin.logout')}</span>}
           </button>
@@ -205,12 +244,30 @@ const AdminLayout = () => {
             </button>
             <h2 className="text-xl font-bold text-gray-800 hidden sm:block">Admin Console</h2>
           </div>
-          <div className="flex items-center gap-4">
-             <button onClick={toggleLanguage} className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100 text-sm font-medium text-gray-700 transition-colors">
-               <Globe size={18} />
-               <span>{isRTL ? 'English' : 'العربية'}</span>
-             </button>
-             <div className="h-10 w-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold">A</div>
+
+          <div className="flex items-center gap-6">
+             {/* User Info Section */}
+             {user && (
+               <div className={`flex flex-col items-end hidden md:flex ${isRTL ? 'text-left' : 'text-right'}`}>
+                 <span className="text-sm font-bold text-gray-900">{user.Name || 'User'}</span>
+                 <div className="flex items-center gap-2">
+                   <span className="text-xs text-gray-500">{user.Email}</span>
+                   <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                     {user.Role}
+                   </span>
+                 </div>
+               </div>
+             )}
+
+             <div className="flex items-center gap-4">
+                <button onClick={toggleLanguage} className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-100 text-sm font-medium text-gray-700 transition-colors">
+                  <Globe size={18} />
+                  <span>{isRTL ? 'English' : 'العربية'}</span>
+                </button>
+                <div className="h-10 w-10 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-lg">
+                  {user?.Name?.charAt(0).toUpperCase() || 'U'}
+                </div>
+             </div>
           </div>
         </header>
 

@@ -113,6 +113,7 @@ const resources = {
         no_results: "No providers found matching your criteria."
       },
       admin: {
+        title: "iXabo Admin Console",
         add: "Add",
         close: "Close",
         dashboard: "Dashboard",
@@ -473,6 +474,7 @@ const resources = {
         no_results: "لم يتم العثور على نتائج تطابق بحثك."
       },
       admin: {
+        title: "منصة إدارة iXabo",
         add: "إضافة",
         close: "إغلاق",
         dashboard: "لوحة التحكم",

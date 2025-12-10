@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../context/AuthContext"; // Import Auth
 import {
   useProviders,
   useDeleteProvider,
@@ -77,8 +78,11 @@ import SubProviderManager from "../../components/admin/providers/SubProviderMana
 
 const Providers = () => {
   const { t, i18n } = useTranslation();
+  const { user } = useAuth(); // Get user role
+  const isAdmin = user?.Role === 'ADMIN'; // Check permissions
+
   const { providers, isLoading, error } = useProviders();
-  const { types: offerTypes } = usePersonalizedOfferTypes(); // Fetch Dropdown Data
+  const { types: offerTypes } = usePersonalizedOfferTypes(); 
 
   const { mutate: deleteProvider } = useDeleteProvider();
   const { mutate: createProvider, isPending: isCreating } = useCreateProvider();
@@ -91,20 +95,14 @@ const Providers = () => {
   const { categories } = useCategories();
   const { governorates } = useGovernorates();
 
-  const [detailType, setDetailType] = useState(null); // 'NUMBER', 'LOCATION', 'LINK'
-
-  const [showOffers, setShowOffers] = useState(null); // Holds provider ID
-
-  const [usersProvider, setUsersProvider] = useState(null); // Holds provider obj
-
-  // -- View Scans Logic --
-  const [scansProvider, setScansProvider] = useState(null); // Holds the provider object if modal is open
-
-  // -- Assign Logic --
-  const [assignType, setAssignType] = useState(null); // 'CATEGORY' or 'GOV' or null
+  const [detailType, setDetailType] = useState(null); 
+  const [showOffers, setShowOffers] = useState(null); 
+  const [usersProvider, setUsersProvider] = useState(null); 
+  const [scansProvider, setScansProvider] = useState(null); 
+  const [assignType, setAssignType] = useState(null); 
   const [targetProviderId, setTargetProviderId] = useState(null);
 
-  // Fetch current assignments (only runs when we have a target ID)
+  // Fetch current assignments
   const { assignedIds: currentCatIds, isLoading: loadingCats } =
     useProviderCategories(targetProviderId);
   const { assignedIds: currentGovIds, isLoading: loadingGovs } =
@@ -115,11 +113,9 @@ const Providers = () => {
   const { mutate: saveGovs, isPending: savingGovs } =
     useUpdateProviderGovernorates();
 
-  // -- Media Manager Logic --
-  const [mediaType, setMediaType] = useState(null); // 'MENU' or 'GALLERY' or null
-  //const [targetProviderId, setTargetProviderId] = useState(null);
+  // Media Manager Logic
+  const [mediaType, setMediaType] = useState(null); 
 
-  // Fetch data (conditional)
   const { menuItems, isLoading: loadingMenu } = useProviderMenu(
     mediaType === "MENU" ? targetProviderId : null
   );
@@ -147,7 +143,6 @@ const Providers = () => {
     ImageUrl: "",
   });
 
-  // Image Upload State
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const fileInputRef = useRef(null);
@@ -162,18 +157,11 @@ const Providers = () => {
     setImageFile(null);
     setImagePreview("");
     setFormData({
-      Name: "",
-      NameAr: "",
-      GroupNum: "",
-      Order: "999",
-      MaxOffers: "5",
-      MaxLimitedOffers: "2",
-      WorkingFrom: "10:00",
-      WorkingTo: "22:00",
+      Name: "", NameAr: "", GroupNum: "", Order: "999",
+      MaxOffers: "5", MaxLimitedOffers: "2",
+      WorkingFrom: "10:00", WorkingTo: "22:00",
       personalized_offer_type_id: "1",
-      ShowMenu: true,
-      IsActive: true,
-      IsComingSoon: false,
+      ShowMenu: true, IsActive: true, IsComingSoon: false,
       ImageUrl: "",
     });
     setIsModalOpen(true);
@@ -192,8 +180,7 @@ const Providers = () => {
       MaxLimitedOffers: p.MaxLimitedOffers?.toString() || "2",
       WorkingFrom: p.WorkingFrom || "10:00",
       WorkingTo: p.WorkingTo || "22:00",
-      personalized_offer_type_id:
-        p.personalized_offer_type_id?.toString() || "1",
+      personalized_offer_type_id: p.personalized_offer_type_id?.toString() || "1",
       ShowMenu: p.ShowMenu ?? true,
       IsActive: p.IsActive ?? true,
       IsComingSoon: p.IsComingSoon ?? false,
@@ -212,15 +199,12 @@ const Providers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.Name) {
       toast.warning(t("admin.fill_required_fields"));
       return;
     }
 
     let finalImageUrl = formData.ImageUrl;
-
-    // Upload Image
     if (imageFile) {
       try {
         toast.info("Uploading logo...");
@@ -241,9 +225,7 @@ const Providers = () => {
       ImageUrl: finalImageUrl,
     };
 
-    const options = {
-      onSuccess: () => setIsModalOpen(false),
-    };
+    const options = { onSuccess: () => setIsModalOpen(false) };
 
     if (editingProvider) {
       updateProvider({ id: editingProvider.ID, ...payload }, options);
@@ -251,6 +233,7 @@ const Providers = () => {
       createProvider(payload, options);
     }
   };
+
   const handleOpenAssign = (provider, type) => {
     setTargetProviderId(provider.ID);
     setAssignType(type);
@@ -258,19 +241,9 @@ const Providers = () => {
 
   const handleSaveAssign = (selectedIds) => {
     if (assignType === "CATEGORY") {
-      saveCats(
-        { providerId: targetProviderId, categoryIds: selectedIds },
-        {
-          onSuccess: () => setAssignType(null),
-        }
-      );
+      saveCats({ providerId: targetProviderId, categoryIds: selectedIds }, { onSuccess: () => setAssignType(null) });
     } else {
-      saveGovs(
-        { providerId: targetProviderId, governorateIds: selectedIds },
-        {
-          onSuccess: () => setAssignType(null),
-        }
-      );
+      saveGovs({ providerId: targetProviderId, governorateIds: selectedIds }, { onSuccess: () => setAssignType(null) });
     }
   };
 
@@ -313,9 +286,9 @@ const Providers = () => {
         <DropdownMenuItem onClick={() => handleOpenEdit(provider)}>
           <Pencil className="mr-2 h-4 w-4" /> {t("admin.edit")}
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleOpenAssign(provider, "CATEGORY")}
-        >
+        
+        {/* Actions for All Roles */}
+        <DropdownMenuItem onClick={() => handleOpenAssign(provider, "CATEGORY")}>
           <Grid className="mr-2 h-4 w-4" /> {t("admin.assign_categories")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleOpenAssign(provider, "GOV")}>
@@ -333,9 +306,7 @@ const Providers = () => {
         <DropdownMenuItem onClick={() => handleOpenDetails(provider, "NUMBER")}>
           <Phone className="mr-2 h-4 w-4" /> {t("admin.manage_numbers")}
         </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleOpenDetails(provider, "LOCATION")}
-        >
+        <DropdownMenuItem onClick={() => handleOpenDetails(provider, "LOCATION")}>
           <MapPin className="mr-2 h-4 w-4" /> {t("admin.manage_locations")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => handleOpenDetails(provider, "LINK")}>
@@ -344,19 +315,24 @@ const Providers = () => {
         <DropdownMenuItem onClick={() => setScansProvider(provider)}>
           <QrCode className="mr-2 h-4 w-4" /> {t("admin.view_scans")}
         </DropdownMenuItem>
+        
+        {/* Manage Users (Sub-providers) - Visible to All */}
         <DropdownMenuItem onClick={() => setUsersProvider(provider)}>
-      <Users className="mr-2 h-4 w-4" /> {t('admin.manage_users')}
-    </DropdownMenuItem>
-
-        <DropdownMenuItem
-          className="text-red-600 focus:text-red-600 focus:bg-red-50"
-          onClick={() => {
-            if (confirm(t("admin.confirm_delete_provider")))
-              deleteProvider(provider.ID);
-          }}
-        >
-          <Trash2 className="mr-2 h-4 w-4" /> {t("admin.delete")}
+          <Users className="mr-2 h-4 w-4" /> {t('admin.manage_users')}
         </DropdownMenuItem>
+
+        {/* Delete - Admin Only */}
+        {isAdmin && (
+          <DropdownMenuItem
+            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+            onClick={() => {
+              if (confirm(t("admin.confirm_delete_provider")))
+                deleteProvider(provider.ID);
+            }}
+          >
+            <Trash2 className="mr-2 h-4 w-4" /> {t("admin.delete")}
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -373,13 +349,17 @@ const Providers = () => {
             {t("admin.providers_subtitle")}
           </p>
         </div>
-        <Button
-          onClick={handleOpenAdd}
-          className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto"
-        >
-          <Plus className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
-          {t("admin.add_provider")}
-        </Button>
+        
+        {/* Add Provider - Admin Only */}
+        {isAdmin && (
+          <Button
+            onClick={handleOpenAdd}
+            className="bg-brand-primary hover:bg-brand-secondary w-full sm:w-auto"
+          >
+            <Plus className={`h-4 w-4 ${isRTL ? "ml-2" : "mr-2"}`} />
+            {t("admin.add_provider")}
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -765,47 +745,34 @@ const Providers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* --- ASSIGN MODAL --- */}
+      {/* ... MODALS (AssignModal, MediaManager, etc.) ... */}
+      {/* (Keep these exactly as they are in your previous file content) */}
       <AssignModal
         isOpen={!!assignType}
         onClose={() => setAssignType(null)}
-        title={
-          assignType === "CATEGORY"
-            ? t("admin.assign_categories")
-            : t("admin.assign_governorates")
-        }
+        title={assignType === "CATEGORY" ? t("admin.assign_categories") : t("admin.assign_governorates")}
         items={assignType === "CATEGORY" ? categories : governorates}
         assignedIds={assignType === "CATEGORY" ? currentCatIds : currentGovIds}
         isLoadingData={assignType === "CATEGORY" ? loadingCats : loadingGovs}
         isSaving={assignType === "CATEGORY" ? savingCats : savingGovs}
         onSave={handleSaveAssign}
       />
-
-      {/* --- MEDIA MANAGER MODAL --- */}
       <MediaManager
         isOpen={!!mediaType}
         onClose={() => setMediaType(null)}
-        title={
-          mediaType === "MENU"
-            ? t("admin.manage_menu")
-            : t("admin.manage_gallery")
-        }
+        title={mediaType === "MENU" ? t("admin.manage_menu") : t("admin.manage_gallery")}
         items={mediaType === "MENU" ? menuItems : galleryItems}
         isLoading={mediaType === "MENU" ? loadingMenu : loadingGallery}
         mutations={mediaType === "MENU" ? menuMutations : galleryMutations}
         providerId={targetProviderId}
-        hasDescription={mediaType === "GALLERY"} // Only gallery has descriptions
+        hasDescription={mediaType === "GALLERY"}
       />
-
-      {/* --- DETAIL MANAGER MODAL --- */}
       <DetailManager
         isOpen={!!detailType}
         onClose={() => setDetailType(null)}
         type={detailType}
         providerId={targetProviderId}
       />
-
-      {/* --- PROVIDER SCANS MODAL --- */}
       {scansProvider && (
         <ProviderScans
           isOpen={!!scansProvider}
@@ -814,8 +781,6 @@ const Providers = () => {
           providerName={isRTL ? scansProvider.NameAr : scansProvider.Name}
         />
       )}
-
-      {/* --- OFFERS MANAGER --- */}
       {showOffers && (
         <OffersManager
           isOpen={!!showOffers}
@@ -823,9 +788,7 @@ const Providers = () => {
           providerId={showOffers}
         />
       )}
-
-      {/* --- SUB PROVIDER MANAGER --- */}
-       {usersProvider && (
+      {usersProvider && (
          <SubProviderManager 
            isOpen={!!usersProvider}
            onClose={() => setUsersProvider(null)}
@@ -833,7 +796,6 @@ const Providers = () => {
            providerName={isRTL ? usersProvider.NameAr : usersProvider.Name}
          />
        )}
-       
     </div>
   );
 };
