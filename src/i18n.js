@@ -131,6 +131,7 @@ const resources = {
           provider: "Provider",
           subprovider: "Sub-provider"
         },
+
         providers_title: "Providers", // or "الشركاء"
         providers_subtitle: "Manage your partners and their status.",
         add_provider: "Add Provider",
@@ -345,6 +346,10 @@ const resources = {
 
         pending_offers: "Pending Offers",
 
+        merchant_leads: "Merchant Leads",
+        pending_approval: "Pending Approval",
+        offer_title: "Offer Title",
+
         menu: {
           dashboard: "Dashboard",
           providers: "Providers",
@@ -363,7 +368,7 @@ const resources = {
           approvals: "Approvals",
           suggestions: "Suggestions & Complaints",
           featured: "Featured Ads",
-        pending_offers: "Pending Offers",
+          pending_offers: "Pending Offers",
         }
       }
     }
@@ -705,6 +710,10 @@ const resources = {
         valid_to: "صالح حتى",
 
         pending_offers: "العروض المعلقة",
+
+        merchant_leads: "طلبات انضمام تجار",
+        pending_approval: "بانتظار الموافقة",
+        offer_title: "عنوان العرض",
 
         menu: {
           dashboard: "لوحة التحكم",

@@ -275,7 +275,7 @@ const Providers = () => {
   );
 
   const ActionMenu = ({ provider }) => (
-    <DropdownMenu>
+   <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100">
           <MoreHorizontal className="h-4 w-4 text-gray-500" />
@@ -283,17 +283,23 @@ const Providers = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isRTL ? "start" : "end"}>
         <DropdownMenuLabel>{t("admin.actions")}</DropdownMenuLabel>
-        <DropdownMenuItem onClick={() => handleOpenEdit(provider)}>
-          <Pencil className="mr-2 h-4 w-4" /> {t("admin.edit")}
-        </DropdownMenuItem>
         
-        {/* Actions for All Roles */}
-        <DropdownMenuItem onClick={() => handleOpenAssign(provider, "CATEGORY")}>
-          <Grid className="mr-2 h-4 w-4" /> {t("admin.assign_categories")}
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleOpenAssign(provider, "GOV")}>
-          <MapPin className="mr-2 h-4 w-4" /> {t("admin.assign_governorates")}
-        </DropdownMenuItem>
+        {/* RESTRICTION: Admin Only Actions */}
+        {isAdmin && (
+          <>
+            <DropdownMenuItem onClick={() => handleOpenEdit(provider)}>
+              <Pencil className="mr-2 h-4 w-4" /> {t("admin.edit")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleOpenAssign(provider, "CATEGORY")}>
+              <Grid className="mr-2 h-4 w-4" /> {t("admin.assign_categories")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleOpenAssign(provider, "GOV")}>
+              <MapPin className="mr-2 h-4 w-4" /> {t("admin.assign_governorates")}
+            </DropdownMenuItem>
+          </>
+        )}
+
+        {/* Visible to All */}
         <DropdownMenuItem onClick={() => setShowOffers(provider.ID)}>
           <Tag className="mr-2 h-4 w-4" /> {t("admin.manage_offers")}
         </DropdownMenuItem>
@@ -315,13 +321,11 @@ const Providers = () => {
         <DropdownMenuItem onClick={() => setScansProvider(provider)}>
           <QrCode className="mr-2 h-4 w-4" /> {t("admin.view_scans")}
         </DropdownMenuItem>
-        
-        {/* Manage Users (Sub-providers) - Visible to All */}
         <DropdownMenuItem onClick={() => setUsersProvider(provider)}>
           <Users className="mr-2 h-4 w-4" /> {t('admin.manage_users')}
         </DropdownMenuItem>
 
-        {/* Delete - Admin Only */}
+        {/* RESTRICTION: Admin Only Delete */}
         {isAdmin && (
           <DropdownMenuItem
             className="text-red-600 focus:text-red-600 focus:bg-red-50"

@@ -9,14 +9,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader, Trash2, Plus, Pencil, Tag, Upload, Image as ImageIcon } from "lucide-react";
 import { useProviderOffers, useOfferMutations, useOfferMetadata } from "../../../hooks/useOffers";
 import { uploadImage } from "../../../services/storage";
+import { useAuth } from "../../../context/AuthContext"; // Import Auth
 import { toast } from "sonner";
 
 const OffersManager = ({ isOpen, onClose, providerId }) => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.dir() === 'rtl';
+  const { user } = useAuth(); // Get user role
+  const isAdmin = user?.Role === 'ADMIN'; // Check permission
   
   const { offers, isLoading } = useProviderOffers(providerId);
-  const { types, categories } = useOfferMetadata(); // We use these for lookups
+  const { types, categories } = useOfferMetadata(); 
   const mutations = useOfferMutations(providerId);
 
   // --- STATE ---
@@ -31,7 +34,6 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
   const normalOffers = offers?.filter(o => !o.IsLimited) || [];
   const limitedOffers = offers?.filter(o => o.IsLimited) || [];
 
-  // Helper to get name from ID
   const getTypeName = (id) => types?.find(t => t.ID === id)?.Name || 'Unknown';
 
   // --- HANDLERS ---
@@ -43,7 +45,8 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
       OfferTypeID: types?.[0]?.ID || "",
       MaxUsage: "100", SilverMaxUsage: "50", BronzeMaxUsage: "10",
       OfferValue1: "0", OfferValue2: "0",
-      IsActive: true, IsForGuests: false, IsAvailableForDelivery: false,
+      IsActive: false, // Default to false
+      IsForGuests: false, IsAvailableForDelivery: false,
       IsLimited: activeTab === 'limited',
       ImageUrl: ""
     });
@@ -52,6 +55,9 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
   };
 
   const handleEdit = (offer) => {
+    // SECURITY CHECK: Providers cannot edit offers
+    if (!isAdmin) return; 
+
     setEditingOffer(offer);
     setPreview(offer.ImageUrl || "");
     setImageFile(null);
@@ -92,9 +98,13 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
       } catch (e) { toast.error("Upload failed"); return; }
     }
 
+    // Force IsActive to false if not admin (Approval Workflow)
+    const finalIsActive = isAdmin ? formData.IsActive : false;
+
     const payload = {
       ProviderID: providerId,
       ...formData,
+      IsActive: finalIsActive, 
       ImageUrl: finalUrl,
       MaxUsage: parseInt(formData.MaxUsage),
       SilverMaxUsage: parseInt(formData.SilverMaxUsage),
@@ -103,9 +113,15 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
       OfferValue2: parseFloat(formData.OfferValue2),
     };
 
-    const options = { onSuccess: () => setEditingOffer(null) };
+    const options = { 
+      onSuccess: () => {
+        setEditingOffer(null);
+        if (!isAdmin) toast.info("Offer submitted for approval");
+      }
+    };
 
     if (editingOffer.ID) {
+      if (!isAdmin) return; // Double check
       mutations.update.mutate({ id: editingOffer.ID, ...payload }, options);
     } else {
       mutations.create.mutate(payload, options);
@@ -147,19 +163,25 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
                       <div className="flex justify-between">
                          <h4 className="font-bold text-gray-900 truncate">{isRTL ? offer.TitleAr : offer.Title}</h4>
                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(offer)}><Pencil size={14} /></Button>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => { if(confirm(t('admin.confirm_delete_generic'))) mutations.remove.mutate(offer.ID); }}><Trash2 size={14} /></Button>
+                            {/* RESTRICTION: Only Admin can Edit/Delete */}
+                            {isAdmin && (
+                              <>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEdit(offer)}><Pencil size={14} /></Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500" onClick={() => { if(confirm(t('admin.confirm_delete_generic'))) mutations.remove.mutate(offer.ID); }}><Trash2 size={14} /></Button>
+                              </>
+                            )}
                          </div>
                       </div>
                       <p className="text-xs text-gray-500 line-clamp-1">{isRTL ? offer.DetailsAr : offer.Details}</p>
                       
                       <div className="flex gap-2 mt-2">
-                         {offer.IsActive ? <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">{t('admin.active')}</span> : <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t('admin.inactive')}</span>}
+                         {offer.IsActive ? 
+                           <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">{t('admin.active')}</span> : 
+                           <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">{t('admin.pending_approval') || 'Pending'}</span>
+                         }
                          
-                         {/* FIX: Lookup Name from types list */}
                          <span className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{getTypeName(offer.OfferTypeID)}</span>
-                         
-                         <span className="text-[10px] bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded">Max: {offer.MaxUsage}</span>
+                         <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">Max: {offer.MaxUsage}</span>
                       </div>
                    </div>
                 </div>
@@ -173,6 +195,7 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
 
         {editingOffer && (
           <div className="space-y-4">
+             {/* ... Image Upload Section (Same) ... */}
              <div className="flex items-center gap-4 bg-gray-50 p-3 rounded-lg border border-dashed border-gray-200">
                 <div className="w-20 h-20 bg-white rounded-lg flex items-center justify-center cursor-pointer border overflow-hidden" onClick={() => fileInputRef.current.click()}>
                    {preview ? <img src={preview} className="w-full h-full object-cover"/> : <ImageIcon className="text-gray-400"/>}
@@ -216,7 +239,10 @@ const OffersManager = ({ isOpen, onClose, providerId }) => {
              </div>
 
              <div className="flex gap-4 pt-2 flex-wrap">
-                <div className="flex items-center gap-2"><Checkbox checked={formData.IsActive || false} onCheckedChange={c => setFormData({...formData, IsActive: c})} /><Label>{t('admin.active_status')}</Label></div>
+                {/* RESTRICTION: Only Admin can toggle Active */}
+                {isAdmin && (
+                  <div className="flex items-center gap-2"><Checkbox checked={formData.IsActive || false} onCheckedChange={c => setFormData({...formData, IsActive: c})} /><Label>{t('admin.active_status')}</Label></div>
+                )}
                 <div className="flex items-center gap-2"><Checkbox checked={formData.IsForGuests || false} onCheckedChange={c => setFormData({...formData, IsForGuests: c})} /><Label>Guests</Label></div>
                 <div className="flex items-center gap-2"><Checkbox checked={formData.IsAvailableForDelivery || false} onCheckedChange={c => setFormData({...formData, IsAvailableForDelivery: c})} /><Label>Delivery</Label></div>
              </div>
